@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "db source for coc.nvim",
   "scripts": {},
+  "main": "src/index.js",
   "engines": {
     "coc": ">=0.0.57"
   },
