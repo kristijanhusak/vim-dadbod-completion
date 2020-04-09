@@ -1,0 +1,55 @@
+{
+  "name": "coc-db",
+  "version": "0.0.1",
+  "description": "db source for coc.nvim",
+  "scripts": {},
+  "engines": {
+    "coc": ">=0.0.57"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kristijanhusak/coc-db.git"
+  },
+  "keywords": [
+    "coc.nvim",
+    "db"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "properties": {
+        "coc.source.db.enable": {
+          "type": "boolean",
+          "default": true
+        },
+        "coc.source.db.shortcut": {
+          "type": "string",
+          "default": "DB"
+        },
+        "coc.source.db.priority": {
+          "type": "integer",
+          "default": 95
+        },
+        "coc.source.db.filetypes": {
+          "type": ["array"],
+          "default": ["sql"],
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "author": "husakkristijan@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kristijanhusak/coc-db/issues"
+  },
+  "homepage": "https://github.com/kristijanhusak/coc-db#readme",
+  "devDependencies": {
+    "coc.nvim": ">=0.0.57"
+  }
+}
