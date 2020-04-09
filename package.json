@@ -29,6 +29,10 @@
           "type": "string",
           "default": "DB"
         },
+        "coc.source.db.triggerCharacters": {
+          "type": "array",
+          "default": ["\"", "."]
+        },
         "coc.source.db.priority": {
           "type": "integer",
           "default": 95

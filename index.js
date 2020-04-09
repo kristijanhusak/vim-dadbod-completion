@@ -3,14 +3,20 @@ const { nvim } = workspace;
 
 const schemas = {
   postgresql: {
-    column_query:  "-A -c 'select column_name from information_schema.columns group by column_name order by column_name asc'",
+    column_query:  "-A -c 'select table_name,column_name from information_schema.columns order by column_name asc'",
     quote: true,
-    filterColumns: columns => columns.slice(1, -1),
+    columnParser: (columns) => {
+      const list = columns.slice(1, -1);
+      return list.map(item => item.split('|').map(i => i.trim()));
+    }
   },
   mysql: {
-    column_query: ' -e "select column_name from information_schema.columns"',
+    column_query: ' -e "select table_name,column_name from information_schema.columns order by column_name asc"',
     quote: false,
-    filterColumns: columns => columns.slice(1),
+    columnParser: (columns) => {
+      const list = columns.slice(1);
+      return list.map(item => item.split('\t').map(i => i.trim()));
+    }
   },
 };
 
@@ -22,7 +28,7 @@ const saveToCache = async (bufnr, db) => {
     return;
   }
 
-  const parsed = await nvim.call('db#url#parse', db)
+  const parsed = await nvim.call('db#url#parse', db);
   byBuffer[bufnr] = {
     db,
     scheme: parsed.scheme,
@@ -34,53 +40,54 @@ const saveToCache = async (bufnr, db) => {
 
   cache[db] = {
     tables: [],
-    columns: []
+    columns: [],
   };
 
   try {
-    const tables = await nvim.call('db#adapter#call', [db, 'tables', [db], []])
+    const tables = await nvim.call('db#adapter#call', [db, 'tables', [db], []]);
     cache[db].tables = [...new Set(tables)];
     if (schemas[parsed.scheme]) {
-      let baseQuery = await nvim.call('db#adapter#dispatch', [db, 'interactive'])
-      const columns = await nvim.call('systemlist', [`${baseQuery} ${schemas[parsed.scheme].column_query}`])
-      cache[db].columns = schemas[parsed.scheme].filterColumns(columns);
+      let baseQuery = await nvim.call('db#adapter#dispatch', [db, 'interactive']);
+      const columns = await nvim.call('systemlist', [`${baseQuery} ${schemas[parsed.scheme].column_query}`]);
+      cache[db].columns = schemas[parsed.scheme].columnParser(columns);
     }
-  } catch (e) {
-    console.debug('ERROR IN COC DB', e)
+  } catch (err) {
+    console.debug('COC DB ERROR', err);
   }
 }
 
 const fetchTablesAndColumns = async (bufnr) => {
-  const dbuiDbKeyName = await nvim.call('getbufvar', [bufnr, 'dbui_db_key_name'])
+  const dbuiDbKeyName = await nvim.call('getbufvar', [bufnr, 'dbui_db_key_name']);
 
   if (dbuiDbKeyName) {
     const db = await nvim.call('db_ui#get_conn_url', [dbuiDbKeyName]);
-    return saveToCache(bufnr, db)
+    return saveToCache(bufnr, db);
   }
 
-  let db = await nvim.call('getbufvar', [bufnr, 'db'])
+  let db = await nvim.call('getbufvar', [bufnr, 'db']);
   if (!db) {
-    db = await nvim.getVar('db')
+    db = await nvim.getVar('db');
   }
 
   return saveToCache(bufnr, db);
 };
 
 const quote = (bufnr, item, charBefore) => {
-  const buf = byBuffer[bufnr]
+  const buf = byBuffer[bufnr];
   if (!buf || !schemas[buf.scheme] || !schemas[buf.scheme].quote) {
     return item;
   }
 
   if (/[A-Z]/.test(item)) {
-    return `${charBefore !== '"' ? '"' : ''}${item}"`
+    return `${charBefore !== '"' ? '"' : ''}${item}"`;
   }
 
   return item;
 };
 
-const setupItemFilter = (items, bufnr, charBefore, menu) => (input, item, info) => {
-  if (input[0].toLowerCase() === item[0].toLowerCase()) {
+
+const basicFilter = (input, item, items, menu, info, bufnr, charBefore, isTriggerCharacter) => {
+  if (isTriggerCharacter || input[0].toLowerCase() === item[0].toLowerCase()) {
     items.push({
       menu,
       info,
@@ -88,29 +95,46 @@ const setupItemFilter = (items, bufnr, charBefore, menu) => (input, item, info) 
       abbr: item,
     });
   }
+}
+
+const setupItemFilter = (items, bufnr, charBefore, menu, isTriggerCharacter) => (input, item, info, table) => {
+  if (info === 'table') {
+    return basicFilter(input, item, items, menu, info, bufnr, charBefore, isTriggerCharacter);
+  }
+
+  if (!table || item[0] === table) {
+    return basicFilter(input, item[1], items, menu, item[0], bufnr, charBefore, isTriggerCharacter);
+  }
 };
 
 exports.activate = context => {
   workspace.onDidOpenTextDocument(e => {
-    const doc = workspace.getDocument(e.uri)
+    const doc = workspace.getDocument(e.uri);
     if (doc.filetype === 'sql') {
-      return fetchTablesAndColumns(doc.bufnr)
+      return fetchTablesAndColumns(doc.bufnr);
     }
   })
 
   const source = {
     name: 'db',
-    filetypes: ['sql'],
     doComplete: async function (opt) {
-      const { input } = opt;
-      if (!input.length) return null;
-      const charBefore = opt.line.charAt(opt.col - 1);
-      const items = []
-      const itemFilter = setupItemFilter(items, opt.bufnr, charBefore, this.menu)
+      const { input, triggerCharacter, line, col, bufnr } = opt;
+      const isTriggerCharacter = this.getConfig('triggerCharacters').includes(triggerCharacter);
+      if (!input.length && !isTriggerCharacter) return null;
+      const charBefore = line.charAt(col - 1);
+      const items = [];
+      let table = null;
+      const table_match = line.match(/"?(\w+)"?\."?\w*"?$/);
+      if (Array.isArray(table_match) && table_match.length >= 1) {
+        table = table_match[1];
+      }
+      const itemFilter = setupItemFilter(items, bufnr, charBefore, this.menu, isTriggerCharacter);
 
       Object.keys(cache).map((key) => {
-        cache[key].tables.map(table => itemFilter(input, table, 'table'));
-        cache[key].columns.map(column => itemFilter(input, column, 'column'));
+        if (!table) {
+          cache[key].tables.map(table => itemFilter(input, table, 'table'));
+        }
+        cache[key].columns.map(column => itemFilter(input, column, 'column', table));
       });
 
       return { items };
