@@ -1,4 +1,5 @@
 const { sources, workspace } = require('coc.nvim');
+const { exec } = require('child_process');
 const schemas = require('./schemas');
 const { debounce } = require('./utils');
 const aliasParser = require('./alias_parser');
@@ -66,8 +67,13 @@ const saveToCache = async (bufnr, db, table = null, dbui = null) => {
 
     if (schemas[buffers[bufnr].scheme]) {
       let baseQuery = await nvim.call('db#adapter#dispatch', [db, 'interactive']);
-      const columns = await nvim.call('systemlist', [`${baseQuery} ${schemas[buffers[bufnr].scheme].column_query}`]);
-      cache[db].columns = schemas[buffers[bufnr].scheme].columnParser(columns);
+      exec(`${baseQuery} ${schemas[buffers[bufnr].scheme].column_query}`, (err, stdout, stderr) => {
+        if (err || stderr) {
+          return;
+        }
+
+        cache[db].columns = schemas[buffers[bufnr].scheme].columnParser(stdout.split('\n').slice(0, -1));
+      });
     }
   } catch (err) {
     console.debug('COC DB ERROR: ', err);
