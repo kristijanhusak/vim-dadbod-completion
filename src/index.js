@@ -131,7 +131,7 @@ const setupFilter = (items, opt, menu, isTriggerCharacter) => {
   }
 };
 
-const cacheAliases = debounce(cacheTableAliases, 50);
+const cacheAliases = debounce(cacheTableAliases, 250);
 
 exports.activate = context => {
   workspace.onDidOpenTextDocument(e => {
@@ -141,19 +141,13 @@ exports.activate = context => {
     }
   });
 
-  workspace.onDidChangeTextDocument(async _e => {
-    const doc = await workspace.document;
-    return cacheAliases(doc.bufnr);
-  });
-
-
   const source = {
     name: 'db',
     doComplete: async function (opt) {
       const { input, triggerCharacter, line } = opt;
       const isTriggerCharacter = this.getConfig('triggerCharacters').includes(triggerCharacter);
       if (!input.length && !isTriggerCharacter) return null;
-      cacheTableAliases(opt.bufnr);
+      cacheAliases(opt.bufnr);
       const items = [];
       let table = null;
       const table_match = line.match(/"?(\w+)"?\."?\w*"?$/);
