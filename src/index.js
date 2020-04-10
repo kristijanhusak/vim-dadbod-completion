@@ -20,6 +20,10 @@ const saveToCache = async (bufnr, db, table = null) => {
   cache[db] = { tables: [], columns: [] };
 
   try {
+    const postgresAdapter = await nvim.getVar('db_adapter_postgres')
+    if (!postgresAdapter) {
+      await nvim.command('let g:db_adapter_postgres = "db#adapter#postgresql#"')
+    }
     const tables = await nvim.call('db#adapter#call', [db, 'tables', [db], []]);
     cache[db].tables = [...new Set(tables)];
     if (schemas[parsed.scheme]) {
