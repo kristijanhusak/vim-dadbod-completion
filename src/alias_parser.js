@@ -4,7 +4,7 @@ module.exports = (content, tables = []) => {
     return result;
   }
   const tableStr = `"?(${tables.join('|')})"?`
-  const regex = new RegExp(`${tableStr}\\s+as\\s+(\\w+)`, 'g')
+  const regex = new RegExp(`${tableStr}\\s+as\\s+"?(\\w+)"?`, 'g')
   let matches = true
   while (matches) {
     matches = regex.exec(content);
