@@ -1,9 +1,21 @@
 const { sources, workspace } = require('coc.nvim');
 const schemas = require('./schemas')
+const { debounce } = require('./utils');
+const aliasParser = require('./alias_parser');
 const { nvim } = workspace;
 
 const cache = {};
-const byBuffer = {};
+const buffers = {};
+
+const cacheTableAliases = async (bufnr) => {
+  const content = await nvim.call('getbufline', [bufnr, 1, '$'])
+  try {
+    const aliases = aliasParser(content.join(' ').trim(), cache[buffers[bufnr].db].tables);
+    buffers[bufnr].table_aliases = aliases;
+  } catch (err) {
+    console.debug('Failed to parse sql: ', err);
+  }
+};
 
 const saveToCache = async (bufnr, db, table = null) => {
   if (!db) {
@@ -11,7 +23,11 @@ const saveToCache = async (bufnr, db, table = null) => {
   }
 
   const parsed = await nvim.call('db#url#parse', db);
-  byBuffer[bufnr] = { table, db, scheme: parsed.scheme };
+  buffers[bufnr] = buffers[bufnr] || {};
+  buffers[bufnr].table = table;
+  buffers[bufnr].db = db;
+  buffers[bufnr].scheme = parsed.scheme;
+  buffers[bufnr].table_aliases = buffers[bufnr].table_aliases || {};
 
   if (cache[db]) {
     return;
@@ -21,8 +37,12 @@ const saveToCache = async (bufnr, db, table = null) => {
 
   try {
     const postgresAdapter = await nvim.getVar('db_adapter_postgres')
+    const sqliteAdapter = await nvim.getVar('db_adapter_sqlite3')
     if (!postgresAdapter) {
       await nvim.command('let g:db_adapter_postgres = "db#adapter#postgresql#"')
+    }
+    if (!sqliteAdapter) {
+      await nvim.command('let g:db_adapter_sqlite3 = "db#adapter#sqlite#"')
     }
     const tables = await nvim.call('db#adapter#call', [db, 'tables', [db], []]);
     cache[db].tables = [...new Set(tables)];
@@ -55,7 +75,7 @@ const fetchTablesAndColumns = async (bufnr) => {
 };
 
 const quote = (bufnr, item, charBefore) => {
-  const buf = byBuffer[bufnr];
+  const buf = buffers[bufnr];
   if (!buf || !schemas[buf.scheme] || !schemas[buf.scheme].quote) {
     return item;
   }
@@ -73,7 +93,7 @@ const setupMatcher = (input, isTriggerCharacter) => item => isTriggerCharacter |
 const setupFilter = (items, opt, menu, isTriggerCharacter) => {
   const { input, line, col, bufnr } = opt;
   const charBefore = line.charAt(col - 1);
-  const bufTable = byBuffer[bufnr] && byBuffer[bufnr].table
+  const bufTable = buffers[bufnr] && buffers[bufnr].table
   const completeItem = (word, info) => ({
     menu,
     info,
@@ -90,15 +110,16 @@ const setupFilter = (items, opt, menu, isTriggerCharacter) => {
       return;
     }
 
+    const alias = buffers[bufnr].table_aliases[item[0]];
     if (table) {
-      if (item[0] === table && isMatch(item[1])) {
+      if ((item[0] === table || (alias && alias === table)) && isMatch(item[1])) {
         items.push(completeItem(item[1], table));
       }
       return;
     }
 
     if (bufTable) {
-      if (item[0] === bufTable && isMatch(item[1])) {
+      if ((item[0] === bufTable || (alias && alias === bufTable)) && isMatch(item[1])) {
         items.push(completeItem(item[1], bufTable));
       }
       return;
@@ -110,13 +131,21 @@ const setupFilter = (items, opt, menu, isTriggerCharacter) => {
   }
 };
 
+const cacheAliases = debounce(cacheTableAliases, 50);
+
 exports.activate = context => {
   workspace.onDidOpenTextDocument(e => {
     const doc = workspace.getDocument(e.uri);
     if (doc.filetype === 'sql') {
       return fetchTablesAndColumns(doc.bufnr);
     }
-  })
+  });
+
+  workspace.onDidChangeTextDocument(async _e => {
+    const doc = await workspace.document;
+    return cacheAliases(doc.bufnr);
+  });
+
 
   const source = {
     name: 'db',
@@ -124,6 +153,7 @@ exports.activate = context => {
       const { input, triggerCharacter, line } = opt;
       const isTriggerCharacter = this.getConfig('triggerCharacters').includes(triggerCharacter);
       if (!input.length && !isTriggerCharacter) return null;
+      cacheTableAliases(opt.bufnr);
       const items = [];
       let table = null;
       const table_match = line.match(/"?(\w+)"?\."?\w*"?$/);
