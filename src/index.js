@@ -70,7 +70,8 @@ const saveToCache = async (bufnr, db, table = null, dbui = null) => {
       cache[db].columns = schemas[buffers[bufnr].scheme].columnParser(columns);
     }
   } catch (err) {
-    console.debug('COC DB ERROR', err);
+    console.debug('COC DB ERROR: ', err);
+    await nvim.command(`echohl ErrorMsg | echom "${err.message}" | echohl None`);
   }
 }
 
