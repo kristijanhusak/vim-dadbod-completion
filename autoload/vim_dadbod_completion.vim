@@ -1,0 +1,193 @@
+let s:cache = {}
+let s:buffers = {}
+
+function! vim_dadbod_completion#print(key) abort
+  return get(s:, a:key)
+endfunction
+
+let s:trigger_rgx = '\."\?$'
+
+function! vim_dadbod_completion#omni(findstart, base)
+  if a:findstart
+    let trigger_char = match(getline('.'), s:trigger_rgx)
+    if trigger_char > -1
+      return trigger_char
+    endif
+    return match(getline('.'), '\(\s\+\|\.\)\@<="\?\w\+\.\?"\?$')
+  endif
+
+  let is_trigger_char = a:base =~? s:trigger_rgx
+
+  if empty(a:base)
+    return
+  endif
+
+  let completions = []
+
+  let bufnr = bufnr('%')
+  let buf = s:buffers[bufnr]
+  let s:buffers[bufnr].aliases = vim_dadbod_completion#alias_parser#parse(bufnr, s:cache[buf.db].tables)
+
+  let line = getline('.')
+  if is_trigger_char && line !~? '\.$'
+    let line .= '.'
+  endif
+  let table_scope_match = matchlist(line, '"\?\(\w\+\)"\?\."\?\w*"\?$')
+  let table_scope = get(table_scope_match, 1, '')
+
+  let db_info = s:get_buffer_db_info(bufnr('%'))
+  let cache_db = s:cache[db_info.url]
+  let append_trigger_char = is_trigger_char && getline('.') !~? s:trigger_rgx
+
+  if empty(table_scope)
+    for table in cache_db.tables
+      call s:add_match(completions, is_trigger_char, append_trigger_char, a:base, table, 'table')
+    endfor
+
+    for [tbl, alias] in items(s:buffers[bufnr].aliases)
+      call s:add_match(completions, is_trigger_char, append_trigger_char, a:base, alias, 'alias for table '.tbl)
+    endfor
+  endif
+
+  for column in cache_db.columns
+    if !s:matches_table_scope(bufnr, table_scope, column[0]) || !s:matches_table_scope(bufnr, db_info.table, column[0])
+      continue
+    endif
+
+    call s:add_match(completions, is_trigger_char, append_trigger_char, a:base, column[1], 'column')
+  endfor
+  return completions
+endfunction
+
+function! s:add_match(completions, is_trigger_char, append_trigger_char, base, value, info) abort
+  let prefix = a:append_trigger_char ? a:base : ''
+  if a:is_trigger_char || a:value =~? '^"\?'.a:base
+    call add(a:completions, {
+          \ 'word': prefix.s:quote(a:value, a:base),
+          \ 'menu': '[DB]',
+          \ 'abbr': a:value,
+          \ 'info': a:info
+          \ })
+  endif
+endfunction
+
+function s:matches_table_scope(bufnr, table_scope, table) abort
+  if empty(a:table_scope)
+    return 1
+  endif
+
+  let alias = get(s:buffers[a:bufnr].aliases, a:table, '')
+  if a:table ==? a:table_scope || (!empty(alias) && alias ==? a:table_scope)
+    return 1
+  endif
+
+  return 0
+endfunction
+
+function! vim_dadbod_completion#fetch(bufnr) abort
+  if !exists('g:db_adapter_postgres')
+    let g:db_adapter_postgres = 'db#adapter#postgresql#'
+  endif
+
+  if !exists('g:db_adapter_sqlite3')
+    let g:db_adapter_sqlite3 = 'db#adapter#sqlite#'
+  endif
+
+  if getbufvar(a:bufnr, '&filetype') !=? 'sql'
+    return
+  endif
+  let db_info = s:get_buffer_db_info(a:bufnr)
+
+  return s:save_to_cache(a:bufnr, db_info.url, db_info.table, db_info.dbui)
+endfunction
+
+function! s:get_buffer_db_info(bufnr) abort
+  let dbui_db_key_name = getbufvar(a:bufnr, 'dbui_db_key_name')
+  let dbui_table_name = getbufvar(a:bufnr, 'dbui_table_name')
+
+  if !empty(dbui_db_key_name)
+    let dbui = db_ui#get_conn_info(dbui_db_key_name)
+    return {
+          \ 'url': dbui.url,
+          \ 'table': dbui_table_name,
+          \ 'dbui': dbui,
+          \ }
+  endif
+
+  let db = getbufvar(a:bufnr, 'db')
+  if empty(db)
+    let db = g:db
+  endif
+  let db_table = getbufvar(a:bufnr, 'db_table')
+  return {
+        \ 'url': db,
+        \ 'table': db_table,
+        \ 'dbui': {},
+        \ }
+endfunction
+
+function! s:save_to_cache(bufnr, db, table, dbui) abort
+  if empty(a:db)
+    return
+  endif
+
+  let tables = []
+  if !has_key(s:buffers, a:bufnr)
+    let s:buffers[a:bufnr] = {}
+  endif
+
+  if !has_key(s:buffers[a:bufnr], 'aliases')
+    let s:buffers[a:bufnr].aliases = {}
+  endif
+
+  if !empty(a:dbui)
+    let s:buffers[a:bufnr].scheme = a:dbui.scheme
+    if a:dbui.connected
+      let tables = a:dbui.tables
+    endif
+  else
+    let parsed = db#url#parse(a:db)
+    let s:buffers[a:bufnr].scheme = parsed.scheme
+  endif
+
+  let s:buffers[a:bufnr].table = a:table
+  let s:buffers[a:bufnr].db = a:db
+
+  if has_key(s:cache, a:db)
+    return
+  endif
+
+  let s:cache[a:db] = { 'tables': tables, 'columns': [] }
+
+  try
+    if empty(s:cache[a:db].tables)
+      let tables = db#adapter#call(a:db, 'tables', [a:db], [])
+      let s:cache[a:db].tables = uniq(tables)
+    endif
+
+    let scheme = vim_dadbod_completion#schemas#get(s:buffers[a:bufnr].scheme)
+    if !empty(scheme)
+      let base_query = db#adapter#dispatch(a:db, 'interactive')
+      let result = systemlist(printf('%s %s', base_query, scheme.column_query))
+      let s:cache[a:db].columns = call(scheme.column_parser, [result])
+    endif
+  catch /.*/
+    echoerr v:exception
+  endtry
+endfunction
+
+function! s:quote(val, base) abort
+  if !has_key(s:buffers, bufnr('%'))
+    return a:val
+  endif
+  let scheme = vim_dadbod_completion#schemas#get(s:buffers[bufnr('%')].scheme)
+  if empty(scheme) || !scheme.quote
+    return a:val
+  endif
+  if a:val =~# '[A-Z]'
+    let prefix = a:base =~? '"$' ? '' : '"'
+    return prefix.a:val.'"'
+  endif
+
+  return a:val
+endfunction
