@@ -1,25 +1,23 @@
 let s:cache = {}
 let s:buffers = {}
 
-function! vim_dadbod_completion#print(key) abort
-  return get(s:, a:key)
-endfunction
-
-let s:trigger_rgx = '\."\?$'
+let s:trigger_rgx = '\(\.\|"\)$'
 
 function! vim_dadbod_completion#omni(findstart, base)
+  let line = getline('.')[0:col('.') - 2]
+  let current_char = getline('.')[col('.') - 2]
   if a:findstart
-    let trigger_char = match(getline('.'), s:trigger_rgx)
+    let trigger_char = match(line, s:trigger_rgx)
     if trigger_char > -1
-      return trigger_char
+      return trigger_char + 1
     endif
-    return match(getline('.'), '\(\s\+\|\.\)\@<="\?\w\+\.\?"\?$')
+    return match(line, '\(\s\+\|\.\)\@<="\?\w\+"\?$')
   endif
 
-  let is_trigger_char = a:base =~? s:trigger_rgx
+  let is_trigger_char = current_char =~? s:trigger_rgx
 
-  if empty(a:base)
-    return
+  if empty(a:base) && !is_trigger_char
+    return []
   endif
 
   let completions = []
@@ -28,24 +26,19 @@ function! vim_dadbod_completion#omni(findstart, base)
   let buf = s:buffers[bufnr]
   let s:buffers[bufnr].aliases = vim_dadbod_completion#alias_parser#parse(bufnr, s:cache[buf.db].tables)
 
-  let line = getline('.')
-  if is_trigger_char && line !~? '\.$'
-    let line .= '.'
-  endif
   let table_scope_match = matchlist(line, '"\?\(\w\+\)"\?\."\?\w*"\?$')
   let table_scope = get(table_scope_match, 1, '')
 
   let db_info = s:get_buffer_db_info(bufnr('%'))
   let cache_db = s:cache[db_info.url]
-  let append_trigger_char = is_trigger_char && getline('.') !~? s:trigger_rgx
 
   if empty(table_scope)
     for table in cache_db.tables
-      call s:add_match(completions, is_trigger_char, append_trigger_char, a:base, table, 'table')
+      call s:add_match(completions, is_trigger_char, current_char, a:base, table, 'table')
     endfor
 
     for [tbl, alias] in items(s:buffers[bufnr].aliases)
-      call s:add_match(completions, is_trigger_char, append_trigger_char, a:base, alias, 'alias for table '.tbl)
+      call s:add_match(completions, is_trigger_char, current_char a:base, alias, 'alias for table '.tbl)
     endfor
   endif
 
@@ -54,16 +47,15 @@ function! vim_dadbod_completion#omni(findstart, base)
       continue
     endif
 
-    call s:add_match(completions, is_trigger_char, append_trigger_char, a:base, column[1], 'column')
+    call s:add_match(completions, is_trigger_char, current_char, a:base, column[1], 'column')
   endfor
   return completions
 endfunction
 
-function! s:add_match(completions, is_trigger_char, append_trigger_char, base, value, info) abort
-  let prefix = a:append_trigger_char ? a:base : ''
+function! s:add_match(completions, is_trigger_char, current_char, base, value, info) abort
   if a:is_trigger_char || a:value =~? '^"\?'.a:base
     call add(a:completions, {
-          \ 'word': prefix.s:quote(a:value, a:base),
+          \ 'word': s:quote(a:value, a:current_char),
           \ 'menu': '[DB]',
           \ 'abbr': a:value,
           \ 'info': a:info
@@ -176,7 +168,7 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
   endtry
 endfunction
 
-function! s:quote(val, base) abort
+function! s:quote(val, current_char) abort
   if !has_key(s:buffers, bufnr('%'))
     return a:val
   endif
@@ -185,8 +177,8 @@ function! s:quote(val, base) abort
     return a:val
   endif
   if a:val =~# '[A-Z]'
-    let prefix = a:base =~? '"$' ? '' : '"'
-    return prefix.a:val.'"'
+    let wrap = a:current_char =~? '"$' ? '' : '"'
+    return wrap.a:val.wrap
   endif
 
   return a:val
