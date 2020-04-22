@@ -1,4 +1,4 @@
-let s:reserved_words = ['inner', 'outer', 'left', 'right', 'join', 'where']
+let s:reserved_words = ['inner', 'outer', 'left', 'right', 'join', 'where', 'on']
 
 function! vim_dadbod_completion#alias_parser#parse(bufnr, tables) abort
   let result = {}
