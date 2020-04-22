@@ -3,6 +3,7 @@ if exists('g:vim_dadbod_completion_loaded')
 endif
 
 let g:vim_dadbod_completion_loaded = 1
+let g:vim_dadbod_completion_mark = get(g:, 'vim_dadbod_completion_mark', '[DB]')
 
 augroup vim_dadbod_completion
   autocmd!

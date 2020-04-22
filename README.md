@@ -15,7 +15,7 @@ For [coc.nvim](https://github.com/neoclide/coc.nvim)
 :CocInstall coc-db
 ```
 
-For `omnifunc`, install it with your favorite plugin manager and set omnifunc for sql buffers:
+For `omnifunc` and [deoplete.nvim](https://github.com/Shougo/deoplete.nvim), install it with your favorite plugin manager.
 
 ```vimL
 function! PackagerInit() abort
@@ -24,6 +24,7 @@ function! PackagerInit() abort
   call packager#add('kristijanhusak/vim-packager', { 'type': 'opt' })
   call packager#add('tpope/vim-dadbod')
   call packager#add('kristijanhusak/vim-dadbod-completion')
+  call packager#add('Shougo/deoplete.nvim')
 endfunction
 
 autocmd FileType sql setlocal omnifunc=vim_dadbod_completion#omni
@@ -37,6 +38,12 @@ autocmd FileType sql setlocal omnifunc=vim_dadbod_completion#omni
 ## How it works
 * If an sql buffer is created by [vim-dadbod-ui](https://github.com/kristijanhusak/vim-dadbod-ui), it reads all the configuration from there. It should work out of the box.
 * If `vim-dadbod-ui` is not used, [vim-dadbod](https://github.com/tpope/vim-dadbod) `g:db` or `b:db` is used. If you want, you can also add `b:db_table` to limit autocompletions to that table only.
+
+## Settings
+Default mark for completion items is `[DB]`. To change it, add this to vimrc:
+```
+let g:vim_dadbod_completion_mark = 'MYMARK'
+```
 
 ## Todo
 * [ ] Integration for column autocompletion with more database types

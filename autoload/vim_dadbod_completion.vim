@@ -56,7 +56,7 @@ function! s:add_match(completions, is_trigger_char, current_char, base, value, i
   if (empty(a:base) && a:is_trigger_char) || a:value =~? '^"\?'.a:base
     call add(a:completions, {
           \ 'word': s:quote(a:value, a:current_char),
-          \ 'menu': '[DB]',
+          \ 'menu': g:vim_dadbod_completion_mark,
           \ 'abbr': a:value,
           \ 'info': a:info
           \ })
