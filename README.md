@@ -1,7 +1,7 @@
 # vim-dadbod-completion
 
 Database auto completion powered by [vim-dadbod](https://github.com/tpope/vim-dadbod).
-Supports built in `omnifunc` and [coc.nvim](https://github.com/neoclide/coc.nvim)
+Supports built in `omnifunc`, [deoplete.nvim](https://github.com/Shougo/deoplete.nvim) and [coc.nvim](https://github.com/neoclide/coc.nvim)
 
 ![coc-db](https://user-images.githubusercontent.com/1782860/78941173-717f6680-7ab7-11ea-91b3-18bf178b3735.gif)
 
