@@ -38,7 +38,7 @@ function! vim_dadbod_completion#omni(findstart, base)
     endfor
 
     for [tbl, alias] in items(s:buffers[bufnr].aliases)
-      call s:add_match(completions, is_trigger_char, current_char a:base, alias, 'alias for table '.tbl)
+      call s:add_match(completions, is_trigger_char, current_char, a:base, alias, 'alias for table '.tbl)
     endfor
   endif
 
