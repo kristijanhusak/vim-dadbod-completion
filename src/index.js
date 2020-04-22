@@ -1,13 +1,13 @@
 const { sources, workspace } = require('coc.nvim');
 const { nvim } = workspace;
 const path = require('path');
+const rtpPath = path.resolve(__dirname, '../');
 
 exports.activate = async (context) => {
-  const paths = await nvim.runtimePaths;
-  const rtpPath = path.resolve(__dirname, '../');
-  if (!paths.includes(rtpPath)) {
-    await nvim.command(`set rtp+=${rtpPath}`)
-  }
+  await nvim.command(`source ${rtpPath}/plugin/vim_dadbod_completion.vim`)
+  await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion.vim`)
+  await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/schemas.vim`)
+  await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/alias_parser.vim`)
 
   workspace.onDidOpenTextDocument(e => {
     const doc = workspace.getDocument(e.uri);
