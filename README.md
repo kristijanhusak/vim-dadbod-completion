@@ -1,6 +1,7 @@
-# coc-db
+# vim-dadbod-completion
 
-Database auto completion extension for [coc.nvim](https://github.com/neoclide/coc.nvim) powered by [vim-dadbod](https://github.com/tpope/vim-dadbod).
+Database auto completion powered by [vim-dadbod](https://github.com/tpope/vim-dadbod).
+Supports built in `omnifunc` and [coc.nvim](https://github.com/neoclide/coc.nvim)
 
 ![coc-db](https://user-images.githubusercontent.com/1782860/78941173-717f6680-7ab7-11ea-91b3-18bf178b3735.gif)
 
@@ -9,8 +10,23 @@ Database auto completion extension for [coc.nvim](https://github.com/neoclide/co
 **Dependencies**:
 * [vim-dadbod](https://github.com/tpope/vim-dadbod)
 
+For [coc.nvim](https://github.com/neoclide/coc.nvim)
 ```
 :CocInstall coc-db
+```
+
+For `omnifunc`, install it with your favorite plugin manager and set omnifunc for sql buffers:
+
+```vimL
+function! PackagerInit() abort
+  packadd vim-packager
+  call packager#init()
+  call packager#add('kristijanhusak/vim-packager', { 'type': 'opt' })
+  call packager#add('tpope/vim-dadbod')
+  call packager#add('kristijanhusak/vim-dadbod-completion')
+endfunction
+
+autocmd FileType sql setlocal omnifunc=vim_dadbod_completion#omni
 ```
 
 ## Features

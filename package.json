@@ -1,6 +1,6 @@
 {
   "name": "coc-db",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "db source for coc.nvim",
   "scripts": {},
   "main": "src/index.js",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kristijanhusak/coc-db.git"
+    "url": "git+https://github.com/kristijanhusak/vim-dadbod-completion.git"
   },
   "keywords": [
     "coc.nvim",
@@ -51,9 +51,9 @@
   "author": "husakkristijan@gmail.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kristijanhusak/coc-db/issues"
+    "url": "https://github.com/kristijanhusak/vim-dadbod-completion/issues"
   },
-  "homepage": "https://github.com/kristijanhusak/coc-db#readme",
+  "homepage": "https://github.com/kristijanhusak/vim-dadbod-completion#readme",
   "devDependencies": {
     "coc.nvim": ">=0.0.57"
   }
