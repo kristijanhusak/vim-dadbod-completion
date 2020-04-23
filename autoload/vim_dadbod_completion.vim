@@ -161,12 +161,15 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
     let scheme = vim_dadbod_completion#schemas#get(s:buffers[a:bufnr].scheme)
     if !empty(scheme)
       let base_query = db#adapter#dispatch(a:db, 'interactive')
-      let result = systemlist(printf('%s %s', base_query, scheme.column_query))
-      let s:cache[a:db].columns = call(scheme.column_parser, [result])
+      call vim_dadbod_completion#job#run(printf('%s %s', base_query, scheme.column_query), function('s:cache_columns', [a:db, scheme]))
     endif
   catch /.*/
     echoerr v:exception
   endtry
+endfunction
+
+function! s:cache_columns(db, scheme, result) abort
+  let s:cache[a:db].columns = call(a:scheme.column_parser, [a:result])
 endfunction
 
 function! s:quote(val, current_char) abort

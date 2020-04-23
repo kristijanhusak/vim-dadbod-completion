@@ -12,7 +12,7 @@ function! vim_dadbod_completion#alias_parser#parse(bufnr, tables) abort
 
   let aliases = []
   for line in content
-    call substitute(line, rgx, '\=add(aliases, [submatch(1),submatch(3)])', 'g')
+    call substitute(line, rgx, '\=add(aliases, [submatch(1), submatch(3)])', 'g')
   endfor
 
   for [tbl, alias] in aliases

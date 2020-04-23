@@ -8,6 +8,7 @@ exports.activate = async (context) => {
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion.vim`)
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/schemas.vim`)
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/alias_parser.vim`)
+  await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/job.vim`)
 
   workspace.onDidOpenTextDocument(e => {
     const doc = workspace.getDocument(e.uri);
