@@ -16,14 +16,14 @@ function! vim_dadbod_completion#omni(findstart, base)
   endif
 
   let is_trigger_char = current_char =~? s:trigger_rgx
+  let bufnr = bufnr('%')
 
-  if empty(a:base) && !is_trigger_char
+  if empty(a:base) && !is_trigger_char || !has_key(s:buffers, bufnr)
     return []
   endif
 
   let completions = []
 
-  let bufnr = bufnr('%')
   let buf = s:buffers[bufnr]
   let s:buffers[bufnr].aliases = vim_dadbod_completion#alias_parser#parse(bufnr, s:cache[buf.db].tables)
 
@@ -109,7 +109,7 @@ function! s:get_buffer_db_info(bufnr) abort
 
   let db = getbufvar(a:bufnr, 'db')
   if empty(db)
-    let db = g:db
+    let db = get(g:, 'db', '')
   endif
   let db_table = getbufvar(a:bufnr, 'db_table')
   return {
