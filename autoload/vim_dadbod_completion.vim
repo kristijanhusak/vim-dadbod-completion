@@ -33,35 +33,30 @@ function! vim_dadbod_completion#omni(findstart, base)
   let db_info = s:get_buffer_db_info(bufnr('%'))
   let cache_db = s:cache[db_info.url]
 
-  if empty(table_scope)
-    for table in cache_db.tables
-      call s:add_match(completions, is_trigger_char, current_char, a:base, table, 'table')
-    endfor
+  let tables = []
+  let aliases = []
+  let columns = []
 
-    for [tbl, alias] in items(s:buffers[bufnr].aliases)
-      call s:add_match(completions, is_trigger_char, current_char, a:base, alias, 'alias for table '.tbl)
-    endfor
+  if empty(table_scope)
+    let tables += filter(copy(cache_db.tables), '(empty(a:base) && is_trigger_char) || v:val =~? ''^"\?''.a:base')
+    call map(tables, {_, table -> {'word': s:quote(table, current_char), 'abbr': table, 'menu': s:mark, 'info': 'table'}})
+
+    let aliases += filter(items(s:buffers[bufnr].aliases), '(empty(a:base) && is_trigger_char) || v:val[1] =~? ''^"\?''.a:base')
+    call map(aliases, {table, alias -> {'word': s:quote(alias[1], current_char), 'abbr': alias[1], 'menu': s:mark, 'info': 'alias for table '.alias[0]}})
   endif
 
-  for column in cache_db.columns
-    if !s:matches_table_scope(bufnr, table_scope, column[0]) || !s:matches_table_scope(bufnr, db_info.table, column[0])
-      continue
-    endif
+  let columns += filter(copy(cache_db.columns), function('s:filter_columns', [bufnr, table_scope, db_info.table, is_trigger_char, current_char, a:base]))
+  call map(columns, {_, column -> {'word': s:quote(column[1], current_char), 'abbr': column[1], 'menu': s:mark, 'info': column[0].' table column' }})
 
-    call s:add_match(completions, is_trigger_char, current_char, a:base, column[1], 'column')
-  endfor
-  return completions
+  return tables + aliases + columns
 endfunction
 
-function! s:add_match(completions, is_trigger_char, current_char, base, value, info) abort
-  if (empty(a:base) && a:is_trigger_char) || a:value =~? '^"\?'.a:base
-    call add(a:completions, {
-          \ 'word': s:quote(a:value, a:current_char),
-          \ 'menu': s:mark,
-          \ 'abbr': a:value,
-          \ 'info': a:info
-          \ })
+function! s:filter_columns(bufnr, table_scope, buffer_table_scope, is_trigger_char, current_char, base, index, column)  abort
+  if !s:matches_table_scope(a:bufnr, a:table_scope, a:column[0]) || !s:matches_table_scope(a:bufnr, a:buffer_table_scope, a:column[0])
+    return 0
   endif
+
+  return (empty(a:base) && a:is_trigger_char) || a:column[1] =~? '^"\?'.a:base
 endfunction
 
 function s:matches_table_scope(bufnr, table_scope, table) abort
