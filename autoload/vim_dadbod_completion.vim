@@ -3,6 +3,7 @@ let s:buffers = {}
 
 let s:trigger_rgx = '\(\.\|"\)$'
 let s:mark = get(g:, 'vim_dadbod_completion_mark', '[DB]')
+let s:force_context = get(g:, 'vim_dadbod_completion_force_context', 0)
 
 function! vim_dadbod_completion#omni(findstart, base)
   let line = getline('.')[0:col('.') - 2]
@@ -59,7 +60,7 @@ function! vim_dadbod_completion#omni(findstart, base)
     let columns = copy(cache_db.columns_by_table[table_scope])
   elseif !empty(buffer_table_scope)
     let columns = copy(cache_db.columns_by_table[buffer_table_scope])
-  else
+  elseif !s:force_context
     let columns = copy(cache_db.columns)
   endif
 
