@@ -16,5 +16,8 @@ class Source(Base):
         return self.vim.call('vim_dadbod_completion#omni', 1, '')
 
     def gather_candidates(self, context):
-        return self.vim.call('vim_dadbod_completion#omni', 0,
-                               context['complete_str'])
+        items = self.vim.call('vim_dadbod_completion#omni', 0,
+                             context['complete_str'])
+        context['is_async'] = self.vim.call('vim_dadbod_completion#refresh_deoplete')
+
+        return items

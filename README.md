@@ -45,10 +45,5 @@ Default mark for completion items is `[DB]`. To change it, add this to vimrc:
 let g:vim_dadbod_completion_mark = 'MYMARK'
 ```
 
-To force autocompletion to always be context aware (complete only tables, and complete columns only when prefixed with table or alias), add this to vimrc:
-```
-let g:vim_dadbod_completion_force_context = 1
-```
-
 ## Todo
 * [ ] Integration for column autocompletion with more database types

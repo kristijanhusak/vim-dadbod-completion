@@ -3,7 +3,6 @@ let s:buffers = {}
 
 let s:trigger_rgx = '\(\.\|"\)$'
 let s:mark = get(g:, 'vim_dadbod_completion_mark', '[DB]')
-let s:force_context = get(g:, 'vim_dadbod_completion_force_context', 0)
 
 function! vim_dadbod_completion#omni(findstart, base)
   let line = getline('.')[0:col('.') - 2]
@@ -23,16 +22,13 @@ function! vim_dadbod_completion#omni(findstart, base)
     return []
   endif
 
-  let completions = []
-
   let buf = s:buffers[bufnr]
   let s:buffers[bufnr].aliases = vim_dadbod_completion#alias_parser#parse(bufnr, s:cache[buf.db].tables)
 
   let table_scope_match = matchlist(line, '"\?\(\w\+\)"\?\."\?\w*"\?$')
   let table_scope = get(table_scope_match, 1, '')
 
-  let db_info = s:get_buffer_db_info(bufnr('%'))
-  let cache_db = s:cache[db_info.url]
+  let cache_db = s:cache[buf.db]
 
   let tables = []
   let aliases = []
@@ -53,14 +49,14 @@ function! vim_dadbod_completion#omni(findstart, base)
     call map(aliases, {table, alias -> {'word': s:quote(alias[1], current_char), 'abbr': alias[1], 'menu': s:mark, 'info': 'alias for table '.alias[0]}})
   endif
 
-  let table_scope = s:get_table_scope(bufnr, cache_db, table_scope)
-  let buffer_table_scope = s:get_table_scope(bufnr, cache_db, db_info.table)
+  let table_scope = s:get_table_scope(buf, table_scope)
+  let buffer_table_scope = s:get_table_scope(buf, buf.table)
 
   if !empty(table_scope)
-    let columns = copy(cache_db.columns_by_table[table_scope])
+    let columns = s:get_table_scope_columns(buf.db, table_scope)
   elseif !empty(buffer_table_scope)
-    let columns = copy(cache_db.columns_by_table[buffer_table_scope])
-  elseif !s:force_context
+    let columns = s:get_table_scope_columns(buf.db, buffer_table_scope)
+  elseif !cache_db.fetch_columns_by_table
     let columns = copy(cache_db.columns)
   endif
 
@@ -71,24 +67,6 @@ function! vim_dadbod_completion#omni(findstart, base)
   call map(columns, {_, column -> {'word': s:quote(column[1], current_char), 'abbr': column[1], 'menu': s:mark, 'info': column[0].' table column' }})
 
   return tables + aliases + columns
-endfunction
-
-function! s:get_table_scope(bufnr, cache_db, table_scope) abort
-  if empty(a:table_scope)
-    return ''
-  endif
-
-  if has_key(a:cache_db.columns_by_table, a:table_scope)
-    return a:table_scope
-  endif
-
-  let alias = filter(copy(s:buffers[a:bufnr].aliases), 'v:val ==? a:table_scope')
-
-  if empty(alias)
-    return ''
-  endif
-
-  return keys(alias)[0]
 endfunction
 
 function! vim_dadbod_completion#fetch(bufnr) abort
@@ -106,31 +84,6 @@ function! vim_dadbod_completion#fetch(bufnr) abort
   let db_info = s:get_buffer_db_info(a:bufnr)
 
   return s:save_to_cache(a:bufnr, db_info.url, db_info.table, db_info.dbui)
-endfunction
-
-function! s:get_buffer_db_info(bufnr) abort
-  let dbui_db_key_name = getbufvar(a:bufnr, 'dbui_db_key_name')
-  let dbui_table_name = getbufvar(a:bufnr, 'dbui_table_name')
-
-  if !empty(dbui_db_key_name)
-    let dbui = db_ui#get_conn_info(dbui_db_key_name)
-    return {
-          \ 'url': dbui.url,
-          \ 'table': dbui_table_name,
-          \ 'dbui': dbui,
-          \ }
-  endif
-
-  let db = getbufvar(a:bufnr, 'db')
-  if empty(db)
-    let db = get(g:, 'db', '')
-  endif
-  let db_table = getbufvar(a:bufnr, 'db_table')
-  return {
-        \ 'url': db,
-        \ 'table': db_table,
-        \ 'dbui': {},
-        \ }
 endfunction
 
 function! s:save_to_cache(bufnr, db, table, dbui) abort
@@ -159,33 +112,53 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
 
   let s:buffers[a:bufnr].table = a:table
   let s:buffers[a:bufnr].db = a:db
+  let s:buffers[a:bufnr].dbui = a:dbui
 
   if has_key(s:cache, a:db)
     return
   endif
 
-  let s:cache[a:db] = { 'tables': tables, 'columns': [], 'columns_by_table': {} }
+  let s:cache[a:db] = {
+        \ 'tables': tables,
+        \ 'columns': [],
+        \ 'columns_by_table': {},
+        \ 'fetch_columns_by_table': 1,
+        \ 'scheme': {}
+        \ }
 
-  try
-    if empty(s:cache[a:db].tables)
-      let tables = db#adapter#call(a:db, 'tables', [a:db], [])
-      let s:cache[a:db].tables = uniq(tables)
-    endif
+  if empty(s:cache[a:db].tables)
+    let tables = db#adapter#call(a:db, 'tables', [a:db], [])
+    let s:cache[a:db].tables = uniq(tables)
+  endif
 
-    let scheme = vim_dadbod_completion#schemas#get(s:buffers[a:bufnr].scheme)
-    if !empty(scheme)
-      let base_query = db#adapter#dispatch(a:db, 'interactive')
-      call vim_dadbod_completion#job#run(printf('%s %s', base_query, scheme.column_query), function('s:cache_columns', [a:db, scheme]))
-    endif
-  catch /.*/
-    echoerr v:exception
-  endtry
+  let scheme = vim_dadbod_completion#schemas#get(s:buffers[a:bufnr].scheme)
+  let s:cache[a:db].scheme = scheme
+  if !empty(scheme)
+    call vim_dadbod_completion#job#run(s:generate_query(a:db, 'count_column_query'), function('s:count_columns_and_cache', [a:db]))
+  endif
 endfunction
 
-function! s:cache_columns(db, scheme, result) abort
-  let columns = call(a:scheme.column_parser, [a:result])
+function! s:generate_query(db, query_key, ...) abort
+  let base_query = db#adapter#dispatch(a:db, 'interactive')
+  let Query = s:cache[a:db].scheme[a:query_key]
+  if a:0 > 0
+    let Query = Query(a:1)
+  endif
+  return printf('%s %s', base_query, Query)
+endfunction
+
+function! s:count_columns_and_cache(db, count) abort
+  let column_count = s:cache[a:db].scheme.count_parser(a:count)
+  if column_count <= 10000
+    call vim_dadbod_completion#job#run(s:generate_query(a:db, 'column_query'), function('s:cache_all_columns', [a:db]))
+  endif
+endfunction
+
+function! s:cache_all_columns(db, result) abort
+  let columns = call(s:cache[a:db].scheme.column_parser, [a:result])
   let s:cache[a:db].columns = columns
   call map(copy(columns), function('s:map_columns_by_table', [a:db]))
+  let s:cache[a:db].fetch_columns_by_table = 0
 endfunction
 
 function! s:map_columns_by_table(db, index, column) abort
@@ -194,6 +167,87 @@ function! s:map_columns_by_table(db, index, column) abort
   endif
   call add(s:cache[a:db].columns_by_table[a:column[0]], a:column)
   return a:column
+endfunction
+
+function! s:get_table_scope_columns(db, table_scope) abort
+  if has_key(s:cache[a:db].columns_by_table, a:table_scope)
+    return copy(s:cache[a:db].columns_by_table[a:table_scope])
+  endif
+  let g:vim_dadbod_completion_refresh_deoplete = 1
+
+  call vim_dadbod_completion#utils#msg(printf('Fetching columns for table %s...', a:table_scope))
+  let query = s:generate_query(a:db, 'table_column_query', a:table_scope)
+  call vim_dadbod_completion#job#run(query, function('s:cache_table_columns', [a:db, a:table_scope]))
+  return []
+endfunction
+
+function! s:cache_table_columns(db, table_scope, result)
+  let columns = call(s:cache[a:db].scheme.column_parser, [a:result])
+  call map(columns, function('s:map_columns_by_table', [a:db]))
+  if exists('*coc#refresh')
+    call coc#start()
+  elseif exists('g:loaded_deoplete')
+    let g:vim_dadbod_completion_refresh_deoplete = 0
+  else
+    call feedkeys("\<C-x>\<C-o>")
+  endif
+  call vim_dadbod_completion#utils#msg(printf('Fetching columns for table %s...Done.', a:table_scope))
+endfunction
+
+function! s:get_table_scope(buffer, table_scope) abort
+  let cache_db = s:cache[a:buffer.db]
+  if empty(a:table_scope)
+    return ''
+  endif
+
+  if has_key(cache_db.columns_by_table, a:table_scope)
+    return a:table_scope
+  endif
+
+  let is_valid = index(cache_db.tables, a:table_scope) > -1
+
+  if is_valid
+    return a:table_scope
+  endif
+
+  let alias = filter(copy(a:buffer.aliases), 'v:val ==? a:table_scope')
+
+  if empty(alias)
+    return ''
+  endif
+
+  let alias_table = keys(alias)[0]
+
+  if index(cache_db.tables, alias_table) > -1
+    return alias_table
+  endif
+
+  return ''
+endfunction
+
+function! s:get_buffer_db_info(bufnr) abort
+  let dbui_db_key_name = getbufvar(a:bufnr, 'dbui_db_key_name')
+  let dbui_table_name = getbufvar(a:bufnr, 'dbui_table_name')
+
+  if !empty(dbui_db_key_name)
+    let dbui = db_ui#get_conn_info(dbui_db_key_name)
+    return {
+          \ 'url': dbui.url,
+          \ 'table': dbui_table_name,
+          \ 'dbui': dbui,
+          \ }
+  endif
+
+  let db = getbufvar(a:bufnr, 'db')
+  if empty(db)
+    let db = get(g:, 'db', '')
+  endif
+  let db_table = getbufvar(a:bufnr, 'db_table')
+  return {
+        \ 'url': db,
+        \ 'table': db_table,
+        \ 'dbui': {},
+        \ }
 endfunction
 
 function! s:quote(val, current_char) abort
@@ -210,4 +264,8 @@ function! s:quote(val, current_char) abort
   endif
 
   return a:val
+endfunction
+
+function! vim_dadbod_completion#refresh_deoplete() abort
+  return get(g:, 'vim_dadbod_completion_refresh_deoplete', 0)
 endfunction

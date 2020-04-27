@@ -10,6 +10,7 @@ exports.activate = async (context) => {
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/schemas.vim`);
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/alias_parser.vim`);
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/job.vim`);
+  await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/utils.vim`);
 
   const currentDoc = await workspace.document;
   if (currentDoc.filetype === 'sql') {
