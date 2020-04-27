@@ -36,40 +36,58 @@ function! vim_dadbod_completion#omni(findstart, base)
   let tables = []
   let aliases = []
   let columns = []
+  let should_filter = !(empty(a:base) && is_trigger_char)
 
   if empty(table_scope)
-    let tables += filter(copy(cache_db.tables), '(empty(a:base) && is_trigger_char) || v:val =~? ''^"\?''.a:base')
+    let tables = copy(cache_db.tables)
+    if should_filter
+      call filter(tables, 'v:val =~? ''^"\?''.a:base')
+    endif
     call map(tables, {_, table -> {'word': s:quote(table, current_char), 'abbr': table, 'menu': s:mark, 'info': 'table'}})
 
-    let aliases += filter(items(s:buffers[bufnr].aliases), '(empty(a:base) && is_trigger_char) || v:val[1] =~? ''^"\?''.a:base')
+    let aliases = items(s:buffers[bufnr].aliases)
+    if should_filter
+      call filter(aliases, 'v:val[1] =~? ''^"\?''.a:base')
+    endif
     call map(aliases, {table, alias -> {'word': s:quote(alias[1], current_char), 'abbr': alias[1], 'menu': s:mark, 'info': 'alias for table '.alias[0]}})
   endif
 
-  let columns += filter(copy(cache_db.columns), function('s:filter_columns', [bufnr, table_scope, db_info.table, is_trigger_char, current_char, a:base]))
+  let table_scope = s:get_table_scope(bufnr, cache_db, table_scope)
+  let buffer_table_scope = s:get_table_scope(bufnr, cache_db, db_info.table)
+
+  if !empty(table_scope)
+    let columns = copy(cache_db.columns_by_table[table_scope])
+  elseif !empty(buffer_table_scope)
+    let columns = copy(cache_db.columns_by_table[buffer_table_scope])
+  else
+    let columns = copy(cache_db.columns)
+  endif
+
+  if should_filter
+    call filter(columns, 'v:val[1] =~? ''^"\?''.a:base')
+  endif
+
   call map(columns, {_, column -> {'word': s:quote(column[1], current_char), 'abbr': column[1], 'menu': s:mark, 'info': column[0].' table column' }})
 
   return tables + aliases + columns
 endfunction
 
-function! s:filter_columns(bufnr, table_scope, buffer_table_scope, is_trigger_char, current_char, base, index, column)  abort
-  if !s:matches_table_scope(a:bufnr, a:table_scope, a:column[0]) || !s:matches_table_scope(a:bufnr, a:buffer_table_scope, a:column[0])
-    return 0
-  endif
-
-  return (empty(a:base) && a:is_trigger_char) || a:column[1] =~? '^"\?'.a:base
-endfunction
-
-function s:matches_table_scope(bufnr, table_scope, table) abort
+function! s:get_table_scope(bufnr, cache_db, table_scope) abort
   if empty(a:table_scope)
-    return 1
+    return ''
   endif
 
-  let alias = get(s:buffers[a:bufnr].aliases, a:table, '')
-  if a:table ==? a:table_scope || (!empty(alias) && alias ==? a:table_scope)
-    return 1
+  if has_key(a:cache_db.columns_by_table, a:table_scope)
+    return a:table_scope
   endif
 
-  return 0
+  let alias = filter(copy(s:buffers[a:bufnr].aliases), 'v:val ==? a:table_scope')
+
+  if empty(alias)
+    return ''
+  endif
+
+  return keys(alias)[0]
 endfunction
 
 function! vim_dadbod_completion#fetch(bufnr) abort
@@ -145,7 +163,7 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
     return
   endif
 
-  let s:cache[a:db] = { 'tables': tables, 'columns': [] }
+  let s:cache[a:db] = { 'tables': tables, 'columns': [], 'columns_by_table': {} }
 
   try
     if empty(s:cache[a:db].tables)
@@ -164,7 +182,17 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
 endfunction
 
 function! s:cache_columns(db, scheme, result) abort
-  let s:cache[a:db].columns = call(a:scheme.column_parser, [a:result])
+  let columns = call(a:scheme.column_parser, [a:result])
+  let s:cache[a:db].columns = columns
+  call map(copy(columns), function('s:map_columns_by_table', [a:db]))
+endfunction
+
+function! s:map_columns_by_table(db, index, column) abort
+  if !has_key(s:cache[a:db].columns_by_table, a:column[0])
+    let s:cache[a:db].columns_by_table[a:column[0]] = []
+  endif
+  call add(s:cache[a:db].columns_by_table[a:column[0]], a:column)
+  return a:column
 endfunction
 
 function! s:quote(val, current_char) abort
