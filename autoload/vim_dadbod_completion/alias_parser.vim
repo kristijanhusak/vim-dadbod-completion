@@ -1,4 +1,4 @@
-let s:reserved_words = ['inner', 'outer', 'left', 'right', 'join', 'where', 'on']
+let s:reserved_words = ['inner', 'outer', 'left', 'right', 'join', 'where', 'on', 'from', 'as']
 
 function! vim_dadbod_completion#alias_parser#parse(bufnr, tables) abort
   let result = {}
@@ -7,16 +7,15 @@ function! vim_dadbod_completion#alias_parser#parse(bufnr, tables) abort
     return result
   endif
 
-  let tableStr = printf('"\?\(%s\)"\?', join(a:tables, '\|'))
-  let rgx = printf('%s\s\+\(as\s\+\)\?"\?\(\w\+\)"\?', tableStr)
+  let rgx = '\(\w\+\)\(from\|as\)\@<!\s\+\(as\s\+\)\?"\?\(\w\+\)"\?'
 
   let aliases = []
   for line in content
-    call substitute(line, rgx, '\=add(aliases, [submatch(1), submatch(3)])', 'g')
+    call substitute(line, rgx, '\=add(aliases, [submatch(1), submatch(4)])', 'g')
   endfor
 
   for [tbl, alias] in aliases
-    if !empty(alias) && index(s:reserved_words, tolower(alias)) ==? -1
+    if !empty(alias) && index(a:tables, tbl) > -1 && index(s:reserved_words, tolower(alias)) ==? -1
       let result[tbl] = alias
     endif
   endfor
