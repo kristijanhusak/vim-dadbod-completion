@@ -7,7 +7,7 @@ function! vim_dadbod_completion#alias_parser#parse(bufnr, tables) abort
     return result
   endif
 
-  let rgx = '\(\w\+\)\(from\|as\)\@<!\s\+\(as\s\+\)\?"\?\(\w\+\)"\?'
+  let rgx = '\(\w\+\)\('.join(s:reserved_words, '\|').'\)\@<!\s\+\(as\s\+\)\?"\?\(\w\+\)"\?'
 
   let aliases = []
   for line in content
