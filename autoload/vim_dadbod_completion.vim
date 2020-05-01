@@ -26,16 +26,24 @@ function! vim_dadbod_completion#omni(findstart, base)
   let s:buffers[bufnr].aliases = vim_dadbod_completion#alias_parser#parse(bufnr, s:cache[buf.db].tables)
 
   let table_scope_match = matchlist(line, '"\?\(\w\+\)"\?\."\?\w*"\?$')
-  let table_scope = get(table_scope_match, 1, '')
+  let table_scope = s:get_table_scope(buf, get(table_scope_match, 1, ''))
+  let buffer_table_scope = s:get_table_scope(buf, buf.table)
 
   let cache_db = s:cache[buf.db]
 
   let tables = []
+  let schemas = []
   let aliases = []
   let columns = []
   let should_filter = !(empty(a:base) && is_trigger_char)
 
   if empty(table_scope)
+    let schemas = copy(cache_db.schemas)
+    if should_filter
+      call filter(schemas, 'v:val =~? ''^"\?''.a:base')
+    endif
+    call map(schemas, {_, schema -> {'word': s:quote(schema, current_char), 'abbr': schema, 'menu': s:mark, 'info': 'schema'}})
+
     let tables = copy(cache_db.tables)
     if should_filter
       call filter(tables, 'v:val =~? ''^"\?''.a:base')
@@ -48,9 +56,6 @@ function! vim_dadbod_completion#omni(findstart, base)
     endif
     call map(aliases, {table, alias -> {'word': s:quote(alias[1], current_char), 'abbr': alias[1], 'menu': s:mark, 'info': 'alias for table '.alias[0]}})
   endif
-
-  let table_scope = s:get_table_scope(buf, table_scope)
-  let buffer_table_scope = s:get_table_scope(buf, buf.table)
 
   if !empty(table_scope)
     let columns = s:get_table_scope_columns(buf.db, table_scope)
@@ -66,7 +71,7 @@ function! vim_dadbod_completion#omni(findstart, base)
 
   call map(columns, {_, column -> {'word': s:quote(column[1], current_char), 'abbr': column[1], 'menu': s:mark, 'info': column[0].' table column' }})
 
-  return tables + aliases + columns
+  return schemas + tables + aliases + columns
 endfunction
 
 function! vim_dadbod_completion#fetch(bufnr) abort
@@ -92,6 +97,7 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
   endif
 
   let tables = []
+  let schemas = []
   if !has_key(s:buffers, a:bufnr)
     let s:buffers[a:bufnr] = {}
   endif
@@ -104,6 +110,7 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
     let s:buffers[a:bufnr].scheme = a:dbui.scheme
     if a:dbui.connected
       let tables = a:dbui.tables
+      let schemas = a:dbui.schemas
     endif
   else
     let parsed = db#url#parse(a:db)
@@ -120,6 +127,7 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
 
   let s:cache[a:db] = {
         \ 'tables': tables,
+        \ 'schemas': schemas,
         \ 'columns': [],
         \ 'columns_by_table': {},
         \ 'fetch_columns_by_table': 1,

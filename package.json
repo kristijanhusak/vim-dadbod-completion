@@ -1,6 +1,6 @@
 {
   "name": "coc-db",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "description": "db source for coc.nvim",
   "scripts": {},
   "main": "src/index.js",
