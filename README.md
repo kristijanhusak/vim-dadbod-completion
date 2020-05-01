@@ -28,7 +28,10 @@ function! PackagerInit() abort
   call packager#add('kristijanhusak/vim-packager', { 'type': 'opt' })
   call packager#add('tpope/vim-dadbod')
   call packager#add('kristijanhusak/vim-dadbod-completion')
+
   call packager#add('Shougo/deoplete.nvim')
+  "or
+  call packager#add('haorenW1025/completion-nvim')
 endfunction
 
 " For built in omnifunc
