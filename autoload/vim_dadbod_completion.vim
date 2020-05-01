@@ -232,7 +232,7 @@ function! s:get_buffer_db_info(bufnr) abort
   if !empty(dbui_db_key_name)
     let dbui = db_ui#get_conn_info(dbui_db_key_name)
     return {
-          \ 'url': dbui.url,
+          \ 'url': dbui.conn,
           \ 'table': dbui_table_name,
           \ 'dbui': dbui,
           \ }
@@ -241,6 +241,11 @@ function! s:get_buffer_db_info(bufnr) abort
   let db = getbufvar(a:bufnr, 'db')
   if empty(db)
     let db = get(g:, 'db', '')
+  endif
+  if !empty(db)
+    call vim_dadbod_completion#utils#msg('Connecting to db...')
+    let db = db#connect(db)
+    call vim_dadbod_completion#utils#msg('Connecting to db...Done.')
   endif
   let db_table = getbufvar(a:bufnr, 'db_table')
   return {
