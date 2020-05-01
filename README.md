@@ -1,7 +1,11 @@
 # vim-dadbod-completion
 
 Database auto completion powered by [vim-dadbod](https://github.com/tpope/vim-dadbod).
-Supports built in `omnifunc`, [deoplete.nvim](https://github.com/Shougo/deoplete.nvim) and [coc.nvim](https://github.com/neoclide/coc.nvim)
+Supports:
+* [coc.nvim](https://github.com/neoclide/coc.nvim)
+* [deoplete.nvim](https://github.com/Shougo/deoplete.nvim)
+* [completion-nvim](https://github.com/haorenW1025/completion-nvim)
+* Built in `omnifunc`
 
 ![coc-db](https://user-images.githubusercontent.com/1782860/78941173-717f6680-7ab7-11ea-91b3-18bf178b3735.gif)
 
@@ -15,7 +19,7 @@ For [coc.nvim](https://github.com/neoclide/coc.nvim)
 :CocInstall coc-db
 ```
 
-For `omnifunc` and [deoplete.nvim](https://github.com/Shougo/deoplete.nvim), install it with your favorite plugin manager.
+For `deoplete`, `completion-nvim` and `omnifunc`, install it with your favorite plugin manager.
 
 ```vimL
 function! PackagerInit() abort
@@ -27,7 +31,26 @@ function! PackagerInit() abort
   call packager#add('Shougo/deoplete.nvim')
 endfunction
 
+" For built in omnifunc
 autocmd FileType sql setlocal omnifunc=vim_dadbod_completion#omni
+
+" For completion-nvim
+augroup completion
+  autocmd!
+  autocmd VimEnter * call s:setup_completion_nvim()
+  autocmd BufEnter * lua require'completion'.on_attach()
+  autocmd FileType sql let g:completion_trigger_character = ['.']
+augroup END
+
+function! s:setup_completion_nvim() abort
+  lua require'source'.addCompleteItems('vim-dadbod-completion', require'vim_dadbod_completion'.complete_item)
+endfunction
+
+let g:completion_chain_complete_list = {
+    \   'sql': [
+    \    {'complete_items': ['vim-dadbod-completion']},
+    \   ],
+    \ ]}
 ```
 
 ## Features
