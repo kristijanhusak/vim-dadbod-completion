@@ -42,19 +42,19 @@ function! vim_dadbod_completion#omni(findstart, base)
     if should_filter
       call filter(schemas, 'v:val =~? ''^"\?''.a:base')
     endif
-    call map(schemas, {_, schema -> {'word': s:quote(schema, current_char), 'abbr': schema, 'menu': s:mark, 'info': 'schema'}})
+    call map(schemas, function('s:map_item', ['string', current_char, 'schema']))
 
     let tables = copy(cache_db.tables)
     if should_filter
       call filter(tables, 'v:val =~? ''^"\?''.a:base')
     endif
-    call map(tables, {_, table -> {'word': s:quote(table, current_char), 'abbr': table, 'menu': s:mark, 'info': 'table'}})
+    call map(tables, function('s:map_item', ['string', current_char, 'table']))
 
     let aliases = items(s:buffers[bufnr].aliases)
     if should_filter
       call filter(aliases, 'v:val[1] =~? ''^"\?''.a:base')
     endif
-    call map(aliases, {table, alias -> {'word': s:quote(alias[1], current_char), 'abbr': alias[1], 'menu': s:mark, 'info': 'alias for table '.alias[0]}})
+    call map(aliases, function('s:map_item', ['list', current_char, 'alias for table %s']))
   endif
 
   if !empty(table_scope)
@@ -69,9 +69,21 @@ function! vim_dadbod_completion#omni(findstart, base)
     call filter(columns, 'v:val[1] =~? ''^"\?''.a:base')
   endif
 
-  call map(columns, {_, column -> {'word': s:quote(column[1], current_char), 'abbr': column[1], 'menu': s:mark, 'info': column[0].' table column' }})
+  call map(columns, function('s:map_item', ['list', current_char, '%s table column']))
 
   return schemas + tables + aliases + columns
+endfunction
+
+function! s:map_item(type, current_char, info_val, index, item) abort
+  let word = a:type ==? 'string' ? a:item : a:item[1]
+  let info = a:type ==? 'string' ? a:info_val : printf(a:info_val, a:item[0])
+  return {
+        \ 'word': s:quote(word, a:current_char),
+        \ 'abbr': word,
+        \ 'menu': s:mark,
+        \ 'info': info,
+        \ 'user_data': { 'hover': info }
+        \ }
 endfunction
 
 function! vim_dadbod_completion#fetch(bufnr) abort
