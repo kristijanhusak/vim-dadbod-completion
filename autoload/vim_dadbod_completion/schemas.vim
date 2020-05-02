@@ -35,11 +35,11 @@ let s:schemas = {
       \   'count_parser': function('s:count_parser', [1])
       \ },
       \ 'sqlserver': {
-      \   'column_query': printf("-h-1 -W -Q '%s'", s:query),
+      \   'column_query': printf("-h-1 -W -s '|' -Q '%s'", s:query),
       \   'count_column_query': printf("-h-1 -W -Q '%s'", s:count_query),
       \   'table_column_query': {table -> printf('-h-1 -W -Q "%s"', substitute(s:table_column_query, '{db_tbl_name}', "'".table."'", ''))},
       \   'quote': 0,
-      \   'column_parser': function('s:map_and_filter', [' ']),
+      \   'column_parser': function('s:map_and_filter', ['|']),
       \   'count_parser': function('s:count_parser', [0])
       \ },
     \ }
