@@ -54,7 +54,11 @@ function! vim_dadbod_completion#job#run(cmd, callback) abort
       let opts['noblock'] = 1
     endif
 
-    return job_start([&shell, '-c', a:cmd], opts)
+    if has('win32')
+        return job_start(printf('%s %s %s', &shell, &shellcmdflag, a:cmd), opts)
+    else
+        return job_start([&shell, &shellcmdflag, a:cmd], opts)
+    endif
   endif
 
   let list = systemlist(a:cmd)
