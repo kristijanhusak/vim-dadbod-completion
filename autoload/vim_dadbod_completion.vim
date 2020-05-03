@@ -82,7 +82,6 @@ function! s:map_item(type, current_char, info_val, index, item) abort
         \ 'abbr': word,
         \ 'menu': s:mark,
         \ 'info': info,
-        \ 'user_data': { 'hover': info }
         \ }
 endfunction
 
