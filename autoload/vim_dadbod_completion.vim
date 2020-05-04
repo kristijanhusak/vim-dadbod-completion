@@ -201,13 +201,16 @@ function! s:get_table_scope_columns(db, table_scope) abort
 endfunction
 
 function! s:cache_table_columns(db, table_scope, result)
+  let s:cache[a:db].columns_by_table[a:table_scope] = []
   let columns = call(s:cache[a:db].scheme.column_parser, [a:result])
   call map(columns, function('s:map_columns_by_table', [a:db]))
   if exists('*coc#refresh')
     call coc#start()
   elseif exists('g:loaded_deoplete')
     let g:vim_dadbod_completion_refresh_deoplete = 0
-  else
+  elseif exists('g:loaded_completion') && exists('*completion#completion_wrapper')
+    call completion#completion_wrapper()
+  elseif &omnifunc ==? 'vim_dadbod_completion#omni'
     call feedkeys("\<C-x>\<C-o>")
   endif
   call vim_dadbod_completion#utils#msg(printf('Fetching columns for table %s...Done.', a:table_scope))
