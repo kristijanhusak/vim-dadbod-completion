@@ -163,8 +163,7 @@ function! s:generate_query(db, query_key, ...) abort
   if a:0 > 0
     let Query = Query(a:1)
   endif
-  " for PostgreSQL
-  return printf('%s %s', substitute(base_query, '"', '', 'g'), Query)
+  return printf('%s %s', base_query, Query)
 endfunction
 
 function! s:count_columns_and_cache(db, count) abort
