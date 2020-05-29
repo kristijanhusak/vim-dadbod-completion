@@ -18,7 +18,16 @@ function! vim_dadbod_completion#omni(findstart, base)
   let is_trigger_char = current_char =~? s:trigger_rgx
   let bufnr = bufnr('%')
 
-  if empty(a:base) && !is_trigger_char || !has_key(s:buffers, bufnr)
+  if empty(a:base) && !is_trigger_char
+    return []
+  endif
+
+  if !has_key(s:buffers, bufnr)
+    call vim_dadbod_completion#fetch(bufnr(''))
+  endif
+
+  " Nothing found, returning empty
+  if !has_key(s:buffers, bufnr)
     return []
   endif
 
