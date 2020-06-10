@@ -40,15 +40,11 @@ autocmd FileType sql setlocal omnifunc=vim_dadbod_completion#omni
 " For completion-nvim
 augroup completion
   autocmd!
-  autocmd VimEnter * call s:setup_completion_nvim()
   autocmd BufEnter * lua require'completion'.on_attach()
-  autocmd FileType sql let g:completion_trigger_character = ['.']
+  autocmd FileType sql let g:completion_trigger_character = ['.', '"']
 augroup END
 
-function! s:setup_completion_nvim() abort
-  lua require'source'.addCompleteItems('vim-dadbod-completion', require'vim_dadbod_completion'.complete_item)
-endfunction
-
+" Source is automatically added, you just need to include it in the chain complete list
 let g:completion_chain_complete_list = {
     \   'sql': [
     \    {'complete_items': ['vim-dadbod-completion']},
