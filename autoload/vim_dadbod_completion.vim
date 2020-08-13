@@ -103,7 +103,7 @@ function! vim_dadbod_completion#fetch(bufnr) abort
     let g:db_adapter_sqlite3 = 'db#adapter#sqlite#'
   endif
 
-  if getbufvar(a:bufnr, '&filetype') !=? 'sql'
+  if getbufvar(a:bufnr, '&filetype') !=? 'sql' && empty(getbufvar(a:bufnr, 'dbui_db_key_name'))
     return
   endif
   let db_info = s:get_buffer_db_info(a:bufnr)
@@ -262,8 +262,12 @@ function! s:get_buffer_db_info(bufnr) abort
 
   if !empty(dbui_db_key_name)
     let dbui = db_ui#get_conn_info(dbui_db_key_name)
+    let conn = dbui.conn
+    if empty(conn)
+      let conn = db#connect(dbui.url)
+    endif
     return {
-          \ 'url': dbui.conn,
+          \ 'url': conn,
           \ 'table': dbui_table_name,
           \ 'dbui': dbui,
           \ }

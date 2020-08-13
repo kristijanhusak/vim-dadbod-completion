@@ -13,13 +13,15 @@ exports.activate = async (context) => {
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/utils.vim`);
 
   const currentDoc = await workspace.document;
-  if (currentDoc.filetype === 'sql') {
+  const dbui_key_name = await nvim.call('getbufvar', [currentDoc.bufnr, 'dbui_db_key_name']);
+  if (currentDoc.filetype === 'sql' || dbui_key_name) {
     nvim.call('vim_dadbod_completion#fetch', [currentDoc.bufnr]);
   }
 
-  workspace.onDidOpenTextDocument(e => {
+  workspace.onDidOpenTextDocument(async e => {
     const doc = workspace.getDocument(e.uri);
-    if (doc.filetype === 'sql') {
+    const dbui_key_name = await nvim.call('getbufvar', [doc.bufnr, 'dbui_db_key_name']);
+    if (doc.filetype === 'sql' || dbui_key_name) {
       return nvim.call('vim_dadbod_completion#fetch', [doc.bufnr]);
     }
   });
