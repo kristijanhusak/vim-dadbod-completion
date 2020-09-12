@@ -64,19 +64,19 @@ function! vim_dadbod_completion#omni(findstart, base)
     if should_filter
       call filter(schemas, 'v:val =~? ''^"\?''.a:base')
     endif
-    call map(schemas, function('s:map_item', ['string', current_char, 'schema']))
+    call map(schemas, function('s:map_item', ['string', 'schema']))
 
     let tables = copy(cache_db.tables)
     if should_filter
       call filter(tables, 'v:val =~? ''^"\?''.a:base')
     endif
-    call map(tables, function('s:map_item', ['string', current_char, 'table']))
+    call map(tables, function('s:map_item', ['string', 'table']))
 
     let aliases = items(s:buffers[bufnr].aliases)
     if should_filter
       call filter(aliases, 'v:val[1] =~? ''^"\?''.a:base')
     endif
-    call map(aliases, function('s:map_item', ['list', current_char, 'alias for table %s']))
+    call map(aliases, function('s:map_item', ['list', 'alias for table %s']))
   endif
 
   if !empty(table_scope)
@@ -91,16 +91,16 @@ function! vim_dadbod_completion#omni(findstart, base)
     call filter(columns, 'v:val[1] =~? ''^"\?''.a:base')
   endif
 
-  call map(columns, function('s:map_item', ['list', current_char, '%s table column']))
+  call map(columns, function('s:map_item', ['list', '%s table column']))
 
   return bind_params + schemas + tables + aliases + columns
 endfunction
 
-function! s:map_item(type, current_char, info_val, index, item) abort
+function! s:map_item(type, info_val, index, item) abort
   let word = a:type ==? 'string' ? a:item : a:item[1]
   let info = a:type ==? 'string' ? a:info_val : printf(a:info_val, a:item[0])
   return {
-        \ 'word': s:quote(word, a:current_char),
+        \ 'word': s:quote(word),
         \ 'abbr': word,
         \ 'menu': s:mark,
         \ 'info': info,
@@ -303,7 +303,7 @@ function! s:get_buffer_db_info(bufnr) abort
         \ }
 endfunction
 
-function! s:quote(val, current_char) abort
+function! s:quote(val) abort
   if !has_key(s:buffers, bufnr('%'))
     return a:val
   endif
@@ -312,8 +312,10 @@ function! s:quote(val, current_char) abort
     return a:val
   endif
   if a:val =~# '[A-Z]'
-    let wrap = a:current_char =~? '"$' ? '' : '"'
-    return wrap.a:val.wrap
+    let line = getline('.')
+    let left_wrap = match(line, '"\w*\%'.col('.').'c') > -1 ? '' : '"'
+    let right_wrap = matchstr(line, '\%>'.(col('.') - 1).'c[" \.]') !=? '"' ? '"' : ''
+    return left_wrap.a:val.right_wrap
   endif
 
   return a:val
