@@ -44,7 +44,20 @@ function! vim_dadbod_completion#omni(findstart, base)
   let schemas = []
   let aliases = []
   let columns = []
+  let bind_params = []
   let should_filter = !(empty(a:base) && is_trigger_char)
+  let bind_params_match = match(line, '[[:blank:]]*:\w*$') > -1
+
+  if bind_params_match && exists('b:dbui_bind_params')
+    for [param_name, param_val] in items(b:dbui_bind_params)
+      call add(bind_params, {
+            \ 'word': param_name[1:],
+            \ 'abbr': param_name,
+            \ 'menu': s:mark,
+            \ 'info': param_val
+            \ })
+    endfor
+  endif
 
   if empty(table_scope)
     let schemas = copy(cache_db.schemas)
@@ -80,7 +93,7 @@ function! vim_dadbod_completion#omni(findstart, base)
 
   call map(columns, function('s:map_item', ['list', current_char, '%s table column']))
 
-  return schemas + tables + aliases + columns
+  return bind_params + schemas + tables + aliases + columns
 endfunction
 
 function! s:map_item(type, current_char, info_val, index, item) abort
