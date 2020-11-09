@@ -28,7 +28,7 @@ let s:oracle_base_column_query = "COLUMN column_name FORMAT a50;\nCOLUMN table_n
 let s:oracle = {
 \   'column_parser': function('s:map_and_filter', ['\s\s\+']),
 \   'column_query': printf(s:oracle_args, printf(s:oracle_base_column_query, 'ORDER BY column_name ASC')),
-\   'count_column_query': printf(s:oracle_args, "COLUMN Total FORMAT 9999999;\nSELECT COUNT(*) AS Total FROM all_tab_columns;"),
+\   'count_column_query': printf(s:oracle_args, "COLUMN total FORMAT 9999999;\nSELECT COUNT(*) AS total FROM all_tab_columns;"),
 \   'count_parser': function('s:count_parser', [1]),
 \   'quote': 1,
 \   'table_column_query': printf(s:oracle_args, printf(s:oracle_base_column_query, 'WHERE table_name={db_tbl_name}')),
