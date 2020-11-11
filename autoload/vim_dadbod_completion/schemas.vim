@@ -24,11 +24,11 @@ let s:postgres = {
       \ }
 
 let s:oracle_args = "echo \"SET linesize 4000;\nSET pagesize 4000;\n%s\" | "
-let s:oracle_base_column_query = "COLUMN column_name FORMAT a50;\nCOLUMN table_name FORMAT a50;\nSELECT C.table_name, C.column_name FROM all_tab_columns C, all_users U WHERE C.owner = U.username AND U.common = 'NO' %s;"
+let s:oracle_base_column_query = "COLUMN column_name FORMAT a50;\nCOLUMN table_name FORMAT a50;\nSELECT C.table_name, C.column_name FROM all_tab_columns C JOIN all_users U ON C.owner = U.username WHERE U.common = 'NO' %s;"
 let s:oracle = {
 \   'column_parser': function('s:map_and_filter', ['\s\s\+']),
 \   'column_query': printf(s:oracle_args, printf(s:oracle_base_column_query, 'ORDER BY C.column_name ASC')),
-\   'count_column_query': printf(s:oracle_args, "COLUMN total FORMAT 9999999;\nSELECT COUNT(*) AS total FROM all_tab_columns C, all_users U WHERE C.owner = U.username AND U.common = 'NO';"),
+\   'count_column_query': printf(s:oracle_args, "COLUMN total FORMAT 9999999;\nSELECT COUNT(*) AS total FROM all_tab_columns C JOIN all_users U ON C.owner = U.username WHERE U.common = 'NO';"),
 \   'count_parser': function('s:count_parser', [1]),
 \   'quote': 1,
 \   'table_column_query': printf(s:oracle_args, printf(s:oracle_base_column_query, "AND C.table_name='{db_tbl_name}'")),
