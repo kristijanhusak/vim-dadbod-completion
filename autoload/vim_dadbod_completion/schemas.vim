@@ -23,6 +23,17 @@ let s:postgres = {
       \ 'count_parser': function('s:count_parser', [1])
       \ }
 
+let s:oracle_args = "echo \"SET linesize 4000;\nSET pagesize 4000;\n%s\" | "
+let s:oracle_base_column_query = printf(s:oracle_args, "COLUMN column_name FORMAT a50;\nCOLUMN table_name FORMAT a50;\nSELECT C.table_name, C.column_name FROM all_tab_columns C JOIN all_users U ON C.owner = U.username WHERE U.common = 'NO' %s;")
+let s:oracle = {
+\   'column_parser': function('s:map_and_filter', ['\s\s\+']),
+\   'column_query': printf(s:oracle_base_column_query, 'ORDER BY C.column_name ASC'),
+\   'count_column_query': printf(s:oracle_args, "COLUMN total FORMAT 9999999;\nSELECT COUNT(*) AS total FROM all_tab_columns C JOIN all_users U ON C.owner = U.username WHERE U.common = 'NO';"),
+\   'count_parser': function('s:count_parser', [1]),
+\   'quote': 1,
+\   'table_column_query': {table -> printf(s:oracle_base_column_query, "AND C.table_name='".table."'")},
+\ }
+
 let s:schemas = {
       \ 'postgres': s:postgres,
       \ 'postgresql': s:postgres,
@@ -34,6 +45,7 @@ let s:schemas = {
       \   'column_parser': function('s:map_and_filter', ['\t']),
       \   'count_parser': function('s:count_parser', [1])
       \ },
+      \ 'oracle': s:oracle,
       \ 'sqlserver': {
       \   'column_query': printf('-h-1 -W -s "|" -Q "%s"', s:query),
       \   'count_column_query': printf('-h-1 -W -Q "%s"', s:count_query),
