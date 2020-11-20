@@ -5,6 +5,7 @@ Supports:
 * [coc.nvim](https://github.com/neoclide/coc.nvim)
 * [deoplete.nvim](https://github.com/Shougo/deoplete.nvim)
 * [completion-nvim](https://github.com/haorenW1025/completion-nvim)
+* [nvim-compe](https://github.com/hrsh7th/nvim-compe)
 * Built in `omnifunc`
 
 ![coc-db](https://user-images.githubusercontent.com/1782860/78941173-717f6680-7ab7-11ea-91b3-18bf178b3735.gif)
@@ -19,7 +20,7 @@ For [coc.nvim](https://github.com/neoclide/coc.nvim)
 :CocInstall coc-db
 ```
 
-For `deoplete`, `completion-nvim` and `omnifunc`, install it with your favorite plugin manager.
+For `deoplete`, `completion-nvim`, `nvim-compe` and `omnifunc`, install it with your favorite plugin manager.
 
 ```vimL
 function! PackagerInit() abort
@@ -32,10 +33,14 @@ function! PackagerInit() abort
   call packager#add('Shougo/deoplete.nvim')
   "or
   call packager#add('haorenW1025/completion-nvim')
+  "or
+  call packager#add('hrsh7th/nvim-compe')
 endfunction
 
 " For built in omnifunc
 autocmd FileType sql setlocal omnifunc=vim_dadbod_completion#omni
+
+" hrsh7th/nvim-compe works out of the box
 
 " For completion-nvim
 augroup completion
