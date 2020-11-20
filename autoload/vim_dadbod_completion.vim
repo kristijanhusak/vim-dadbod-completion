@@ -12,7 +12,7 @@ function! vim_dadbod_completion#omni(findstart, base)
     if trigger_char > -1
       return trigger_char + 1
     endif
-    return match(line, '\(\s\+\|\.\)\@<="\?\w\+"\?$')
+    return match(line, '\(\s\+\|\.\|"\)\@<=\w\+"\?$')
   endif
 
   let is_trigger_char = current_char =~? s:trigger_rgx
