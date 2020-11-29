@@ -12,7 +12,7 @@ function! vim_dadbod_completion#omni(findstart, base)
     if trigger_char > -1
       return trigger_char + 1
     endif
-    return match(line, '\(\s\+\|\.\|"\)\@<=\w\+"\?$')
+    return match(line, '\(^\|\s\+\|\.\|"\|(\)\@<=\w\+"\?$')
   endif
 
   let is_trigger_char = current_char =~? s:trigger_rgx
@@ -46,6 +46,7 @@ function! vim_dadbod_completion#omni(findstart, base)
   let columns = []
   let reserved_words = []
   let bind_params = []
+  let functions = []
   let should_filter = !(empty(a:base) && is_trigger_char)
   let bind_params_match = match(line, '[[:blank:]]*:\w*$') > -1
 
@@ -78,18 +79,20 @@ function! vim_dadbod_completion#omni(findstart, base)
       call filter(aliases, 'v:val[1] =~? ''^"\?''.a:base')
     endif
     call map(aliases, function('s:map_item', ['list', 'alias for table %s']))
-  endif
 
-  let reserved_words = copy(vim_dadbod_completion#reserved_keywords#get())
-  if !empty(a:base)
-    call filter(reserved_words, 'v:val =~? ''^''.a:base')
+    let reserved_words = copy(vim_dadbod_completion#reserved_keywords#get())
+    if !empty(a:base) && !is_trigger_char
+      call filter(reserved_words, 'v:val =~? ''^''.a:base')
+    endif
+    call map(reserved_words, {i,word -> {'word': toupper(word), 'abbr': word, 'menu': s:mark, 'info': 'SQL reserved word' }})
+
+    let functions = copy(cache_db.functions)
+    if !empty(a:base) && !is_trigger_char
+      call filter(functions, 'v:val =~? ''^''.a:base')
+    endif
+
+    call map(functions, {i,fn -> {'word': fn, 'abbr': fn, 'menu': s:mark, 'info': 'Function' }})
   endif
-  call map(reserved_words, {i,word -> {
-        \ 'word': toupper(word),
-        \ 'abbr': word,
-        \ 'menu': s:mark,
-        \ 'info': 'SQL reserved word',
-        \ }})
 
   if !empty(table_scope)
     let columns = s:get_table_scope_columns(buf.db, table_scope)
@@ -105,7 +108,7 @@ function! vim_dadbod_completion#omni(findstart, base)
 
   call map(columns, function('s:map_item', ['list', '%s table column']))
 
-  return bind_params + schemas + tables + aliases + columns + reserved_words
+  return bind_params + schemas + tables + aliases + columns + reserved_words + functions
 endfunction
 
 function! s:map_item(type, info_val, index, item) abort
@@ -174,6 +177,7 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
         \ 'tables': tables,
         \ 'schemas': schemas,
         \ 'columns': [],
+        \ 'functions': [],
         \ 'columns_by_table': {},
         \ 'fetch_columns_by_table': 1,
         \ 'scheme': {}
@@ -188,7 +192,14 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
   let s:cache[a:db].scheme = scheme
   if !empty(scheme)
     call vim_dadbod_completion#job#run(s:generate_query(a:db, 'count_column_query'), function('s:count_columns_and_cache', [a:db]))
+    if has_key(scheme, 'functions_query')
+      call vim_dadbod_completion#job#run(s:generate_query(a:db, 'functions_query'), function('s:parse_functions', [a:db]))
+    endif
   endif
+endfunction
+
+function! s:parse_functions(db, functions) abort
+  let s:cache[a:db].functions = s:cache[a:db].scheme.functions_parser(a:functions)
 endfunction
 
 function! s:generate_query(db, query_key, ...) abort

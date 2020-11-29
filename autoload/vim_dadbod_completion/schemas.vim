@@ -18,6 +18,8 @@ let s:postgres = {
       \ 'column_query': printf('-A -c "%s"', s:query),
       \ 'count_column_query': printf('-A -c "%s"', s:count_query),
       \ 'table_column_query': {table -> printf('-A -c "%s"', substitute(s:table_column_query, '{db_tbl_name}', "'".table."'", ''))},
+      \ 'functions_query': printf('-A -c "%s"', "SELECT routine_name FROM information_schema.routines WHERE routine_type='FUNCTION'"),
+      \ 'functions_parser': {list->list[0:-4]},
       \ 'quote': 1,
       \ 'column_parser': function('s:map_and_filter', ['|']),
       \ 'count_parser': function('s:count_parser', [1])
