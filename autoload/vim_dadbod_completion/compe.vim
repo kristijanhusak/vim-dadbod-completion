@@ -14,9 +14,9 @@ endfunction
 function! s:datermine(context) abort
   let offset = vim_dadbod_completion#omni(1, '') + 1
   let char = a:context.before_char
-  if offset > 1
+  if offset >= 0
     return {
-          \   'keyword_pattern_offset': offset,
+          \   'keyword_pattern_offset': max([1, offset]),
           \   'trigger_character_offset': (char ==? '.' || char ==? '"') ? a:context.col : 0
           \ }
   endif

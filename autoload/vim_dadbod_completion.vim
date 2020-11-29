@@ -44,6 +44,7 @@ function! vim_dadbod_completion#omni(findstart, base)
   let schemas = []
   let aliases = []
   let columns = []
+  let reserved_words = []
   let bind_params = []
   let should_filter = !(empty(a:base) && is_trigger_char)
   let bind_params_match = match(line, '[[:blank:]]*:\w*$') > -1
@@ -79,6 +80,17 @@ function! vim_dadbod_completion#omni(findstart, base)
     call map(aliases, function('s:map_item', ['list', 'alias for table %s']))
   endif
 
+  let reserved_words = copy(vim_dadbod_completion#reserved_keywords#get())
+  if !empty(a:base)
+    call filter(reserved_words, 'v:val =~? ''^''.a:base')
+  endif
+  call map(reserved_words, {i,word -> {
+        \ 'word': toupper(word),
+        \ 'abbr': word,
+        \ 'menu': s:mark,
+        \ 'info': 'SQL reserved word',
+        \ }})
+
   if !empty(table_scope)
     let columns = s:get_table_scope_columns(buf.db, table_scope)
   elseif !empty(buffer_table_scope)
@@ -93,7 +105,7 @@ function! vim_dadbod_completion#omni(findstart, base)
 
   call map(columns, function('s:map_item', ['list', '%s table column']))
 
-  return bind_params + schemas + tables + aliases + columns
+  return bind_params + schemas + tables + aliases + columns + reserved_words
 endfunction
 
 function! s:map_item(type, info_val, index, item) abort
