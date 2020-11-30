@@ -84,7 +84,7 @@ function! vim_dadbod_completion#omni(findstart, base)
     if !empty(a:base) && !is_trigger_char
       call filter(reserved_words, 'v:val =~? ''^''.a:base')
     endif
-    call map(reserved_words, {i,word -> {'word': toupper(word), 'abbr': word, 'menu': s:mark, 'info': 'SQL reserved word' }})
+    call map(reserved_words, {i,word -> {'word': word, 'abbr': word, 'menu': s:mark, 'info': 'SQL reserved word' }})
 
     let functions = copy(cache_db.functions)
     if !empty(a:base) && !is_trigger_char
