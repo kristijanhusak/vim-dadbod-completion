@@ -40,7 +40,8 @@ endfunction
 " For built in omnifunc
 autocmd FileType sql setlocal omnifunc=vim_dadbod_completion#omni
 
-" hrsh7th/nvim-compe works out of the box
+" hrsh7th/nvim-compe
+let g:compe.source.vim_dadbod_completion = v:true
 
 " For completion-nvim
 augroup completion
