@@ -150,3 +150,11 @@ let s:reserved_words = [
 function! vim_dadbod_completion#reserved_keywords#get() abort
   return s:reserved_words
 endfunction
+
+function! vim_dadbod_completion#reserved_keywords#get_as_dict() abort
+  let result = {}
+  for word in s:reserved_words
+    let result[word] = 1
+  endfor
+  return result
+endfunction

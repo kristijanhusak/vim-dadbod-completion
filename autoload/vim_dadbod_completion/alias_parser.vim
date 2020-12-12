@@ -1,4 +1,13 @@
 let s:reserved_words = ['inner', 'outer', 'left', 'right', 'join', 'where', 'on', 'from', 'as']
+let s:quotes = vim_dadbod_completion#schemas#get_quotes_rgx()
+let s:alias_rgx = printf(
+      \ '\(%s\)\?\(\w\+\)\(%s\)\?\(%s\)\@<!\s\+\(as\s\+\)\?\(%s\)\?\(\w\+\)\(%s\)\?',
+      \ s:quotes.open,
+      \ s:quotes.close,
+      \ join(s:reserved_words, '\|'),
+      \ s:quotes.open,
+      \ s:quotes.close
+      \ )
 
 function! vim_dadbod_completion#alias_parser#parse(bufnr, tables) abort
   let result = {}
@@ -7,11 +16,9 @@ function! vim_dadbod_completion#alias_parser#parse(bufnr, tables) abort
     return result
   endif
 
-  let rgx = '"\?\(\w\+\)"\?\('.join(s:reserved_words, '\|').'\)\@<!\s\+\(as\s\+\)\?"\?\(\w\+\)"\?'
-
   let aliases = []
   for line in content
-    call substitute(line, rgx, '\=add(aliases, [submatch(1), submatch(4)])', 'g')
+    call substitute(line, s:alias_rgx, '\=add(aliases, [submatch(2), submatch(7)])', 'g')
   endfor
 
   for [tbl, alias] in aliases

@@ -1,7 +1,10 @@
 let s:cache = {}
 let s:buffers = {}
 
-let s:trigger_rgx = '\(\.\|"\)$'
+let s:quotes = vim_dadbod_completion#schemas#get_quotes_rgx()
+let s:trigger_rgx = printf('\(%s\|\.\)$', s:quotes.open)
+let s:findstart_rgx = printf('\(^\|\s\+\|\.\|(\|%s\)\@<=\w\+\(%s\)\?$', s:quotes.open, s:quotes.close)
+let s:table_scope_rgx = printf('\(%s\)\?\(\w\+\)\(%s\)\?\.\(%s\)\?\w*\(%s\)\?$', s:quotes.open, s:quotes.close, s:quotes.open, s:quotes.close)
 let s:mark = get(g:, 'vim_dadbod_completion_mark', '[DB]')
 
 function! vim_dadbod_completion#omni(findstart, base)
@@ -12,7 +15,7 @@ function! vim_dadbod_completion#omni(findstart, base)
     if trigger_char > -1
       return trigger_char + 1
     endif
-    return match(line, '\(^\|\s\+\|\.\|"\|(\)\@<=\w\+"\?$')
+    return match(line, s:findstart_rgx)
   endif
 
   let is_trigger_char = current_char =~? s:trigger_rgx
@@ -34,8 +37,8 @@ function! vim_dadbod_completion#omni(findstart, base)
   let buf = s:buffers[bufnr]
   let s:buffers[bufnr].aliases = vim_dadbod_completion#alias_parser#parse(bufnr, s:cache[buf.db].tables)
 
-  let table_scope_match = matchlist(line, '"\?\(\w\+\)"\?\."\?\w*"\?$')
-  let table_scope = s:get_table_scope(buf, get(table_scope_match, 1, ''))
+  let table_scope_match = matchlist(line, s:table_scope_rgx)
+  let table_scope = s:get_table_scope(buf, get(table_scope_match, 2, ''))
   let buffer_table_scope = s:get_table_scope(buf, buf.table)
 
   let cache_db = s:cache[buf.db]
@@ -331,17 +334,17 @@ function! s:quote(val) abort
     return a:val
   endif
   let scheme = vim_dadbod_completion#schemas#get(s:buffers[bufnr('%')].scheme)
-  if empty(scheme) || !scheme.quote
+  if empty(scheme) || !scheme.should_quote(a:val)
     return a:val
   endif
-  if a:val =~# '[A-Z]'
-    let line = getline('.')
-    let left_wrap = match(line, '"\w*\%'.col('.').'c') > -1 ? '' : '"'
-    let right_wrap = matchstr(line, '\%>'.(col('.') - 1).'c[" \.]') !=? '"' ? '"' : ''
-    return left_wrap.a:val.right_wrap
-  endif
 
-  return a:val
+  let line = getline('.')
+  let [l_quote, r_quote] = scheme.quote
+  let l_quote_esc = escape(l_quote, '[')
+  let r_quote_esc = escape(r_quote, ']')
+  let left_wrap = match(line, l_quote_esc.'\w*\%'.col('.').'c') > -1 ? '' : l_quote
+  let right_wrap = matchstr(line, '\%>'.(col('.') - 1).'c['.r_quote_esc.' \.]') !=? r_quote ? r_quote : ''
+  return left_wrap.a:val.right_wrap
 endfunction
 
 function! vim_dadbod_completion#refresh_deoplete() abort
