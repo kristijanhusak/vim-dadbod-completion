@@ -5,13 +5,13 @@ const rtpPath = path.resolve(__dirname, '../');
 
 
 exports.activate = async (context) => {
-  await nvim.command(`source ${rtpPath}/plugin/vim_dadbod_completion.vim`);
+  await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/reserved_keywords.vim`);
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/schemas.vim`);
+  await nvim.command(`source ${rtpPath}/plugin/vim_dadbod_completion.vim`);
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion.vim`);
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/alias_parser.vim`);
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/job.vim`);
   await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/utils.vim`);
-  await nvim.command(`source ${rtpPath}/autoload/vim_dadbod_completion/reserved_keywords.vim`);
 
   const currentDoc = await workspace.document;
   const dbui_key_name = await nvim.call('getbufvar', [currentDoc.bufnr, 'dbui_db_key_name']);
