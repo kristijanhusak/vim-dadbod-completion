@@ -25,10 +25,7 @@ endfunction
 
 function! s:documentation(args) abort
   let info = get(a:args.completed_item, 'info', '')
-  if empty(info)
-    return a:args.abort()
-  endif
-  return a:args.callback([info])
+  return a:args.callback(info)
 endfunction
 
 function! s:complete(args) abort

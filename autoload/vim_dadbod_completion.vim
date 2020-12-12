@@ -5,6 +5,7 @@ let s:quotes = vim_dadbod_completion#schemas#get_quotes_rgx()
 let s:trigger_rgx = printf('\(%s\|\.\)$', s:quotes.open)
 let s:findstart_rgx = printf('\(^\|\s\+\|\.\|(\|%s\)\@<=\w\+\(%s\)\?$', s:quotes.open, s:quotes.close)
 let s:table_scope_rgx = printf('\(%s\)\?\(\w\+\)\(%s\)\?\.\(%s\)\?\w*\(%s\)\?$', s:quotes.open, s:quotes.close, s:quotes.open, s:quotes.close)
+let s:filter_rgx = printf('^\(%s\)\?', s:quotes.open)
 let s:mark = get(g:, 'vim_dadbod_completion_mark', '[DB]')
 
 function! vim_dadbod_completion#omni(findstart, base)
@@ -67,34 +68,34 @@ function! vim_dadbod_completion#omni(findstart, base)
   if empty(table_scope)
     let schemas = copy(cache_db.schemas)
     if should_filter
-      call filter(schemas, 'v:val =~? ''^"\?''.a:base')
+      call filter(schemas, 'v:val =~? s:filter_rgx.a:base')
     endif
-    call map(schemas, function('s:map_item', ['string', 'schema']))
+    call map(schemas, function('s:map_item', ['string', 'schema', 'S']))
 
     let tables = copy(cache_db.tables)
     if should_filter
-      call filter(tables, 'v:val =~? ''^"\?''.a:base')
+      call filter(tables, 'v:val =~? s:filter_rgx.a:base')
     endif
-    call map(tables, function('s:map_item', ['string', 'table']))
+    call map(tables, function('s:map_item', ['string', 'table', 'T']))
 
     let aliases = items(s:buffers[bufnr].aliases)
     if should_filter
-      call filter(aliases, 'v:val[1] =~? ''^"\?''.a:base')
+      call filter(aliases, 'v:val[1] =~? s:filter_rgx.a:base')
     endif
-    call map(aliases, function('s:map_item', ['list', 'alias for table %s']))
+    call map(aliases, function('s:map_item', ['list', 'alias for table %s', 'A']))
 
     let reserved_words = copy(vim_dadbod_completion#reserved_keywords#get())
     if !empty(a:base) && !is_trigger_char
       call filter(reserved_words, 'v:val =~? ''^''.a:base')
     endif
-    call map(reserved_words, {i,word -> {'word': word, 'abbr': word, 'menu': s:mark, 'info': 'SQL reserved word' }})
+    call map(reserved_words, {i,word -> {'word': word, 'abbr': word, 'menu': s:mark, 'info': 'SQL reserved word', 'kind': 'R' }})
 
     let functions = copy(cache_db.functions)
     if !empty(a:base) && !is_trigger_char
       call filter(functions, 'v:val =~? ''^''.a:base')
     endif
 
-    call map(functions, {i,fn -> {'word': fn, 'abbr': fn, 'menu': s:mark, 'info': 'Function' }})
+    call map(functions, {i,fn -> {'word': fn, 'abbr': fn, 'menu': s:mark, 'info': 'Function', 'kind': 'F' }})
   endif
 
   if !empty(table_scope)
@@ -106,21 +107,22 @@ function! vim_dadbod_completion#omni(findstart, base)
   endif
 
   if should_filter
-    call filter(columns, 'v:val[1] =~? ''^"\?''.a:base')
+    call filter(columns, 'v:val[1] =~? s:filter_rgx.a:base')
   endif
 
-  call map(columns, function('s:map_item', ['list', '%s table column']))
+  call map(columns, function('s:map_item', ['list', '%s table column', 'C']))
 
   return bind_params + schemas + tables + aliases + columns + reserved_words + functions
 endfunction
 
-function! s:map_item(type, info_val, index, item) abort
+function! s:map_item(type, info_val, kind, index, item) abort
   let word = a:type ==? 'string' ? a:item : a:item[1]
   let info = a:type ==? 'string' ? a:info_val : printf(a:info_val, a:item[0])
   return {
         \ 'word': s:quote(word),
         \ 'abbr': word,
         \ 'menu': s:mark,
+        \ 'kind': a:kind,
         \ 'info': info,
         \ }
 endfunction
