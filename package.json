@@ -1,6 +1,6 @@
 {
   "name": "coc-db",
-  "version": "0.0.40",
+  "version": "0.0.41",
   "description": "db source for coc.nvim",
   "scripts": {},
   "main": "src/index.js",
@@ -32,7 +32,7 @@
         },
         "coc.source.db.triggerCharacters": {
           "type": "array",
-          "default": ["\"", "."]
+          "default": ["\"", ".", "`", "["]
         },
         "coc.source.db.priority": {
           "type": "integer",
