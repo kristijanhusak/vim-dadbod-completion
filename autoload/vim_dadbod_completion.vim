@@ -38,9 +38,10 @@ function! vim_dadbod_completion#omni(findstart, base)
   let buf = s:buffers[bufnr]
   let s:buffers[bufnr].aliases = vim_dadbod_completion#alias_parser#parse(bufnr, s:cache[buf.db].tables)
 
-  let table_scope_match = matchlist(line, s:table_scope_rgx)
-  let table_scope = s:get_table_scope(buf, get(table_scope_match, 2, ''))
-  let buffer_table_scope = s:get_table_scope(buf, buf.table)
+  let table_scope_match = get(matchlist(line, s:table_scope_rgx), 2, '')
+  let table_scope = s:get_scope(buf, table_scope_match, 'table')
+  let buffer_table_scope = s:get_scope(buf, buf.table, 'table')
+  let schema_scope = s:get_scope(buf, table_scope_match, 'schema')
 
   let cache_db = s:cache[buf.db]
 
@@ -65,18 +66,18 @@ function! vim_dadbod_completion#omni(findstart, base)
     endfor
   endif
 
-  if empty(table_scope)
-    let schemas = copy(cache_db.schemas)
-    if should_filter
-      call filter(schemas, 'v:val =~? s:filter_rgx.a:base')
-    endif
-    call map(schemas, function('s:map_item', ['string', 'schema', 'S']))
-
+  if empty(table_scope) && empty(schema_scope)
     let tables = copy(cache_db.tables)
     if should_filter
       call filter(tables, 'v:val =~? s:filter_rgx.a:base')
     endif
     call map(tables, function('s:map_item', ['string', 'table', 'T']))
+
+    let schemas = keys(cache_db.schemas)
+    if should_filter
+      call filter(schemas, 'v:val =~? s:filter_rgx.a:base')
+    endif
+    call map(schemas, function('s:map_item', ['string', 'schema', 'S']))
 
     let aliases = items(s:buffers[bufnr].aliases)
     if should_filter
@@ -98,11 +99,19 @@ function! vim_dadbod_completion#omni(findstart, base)
     call map(functions, {i,fn -> {'word': fn, 'abbr': fn, 'menu': s:mark, 'info': 'Function', 'kind': 'F' }})
   endif
 
+  if !empty(schema_scope)
+    let tables = copy(cache_db.schemas[schema_scope])
+    if should_filter
+      call filter(tables, 'v:val =~? s:filter_rgx.a:base')
+    endif
+    call map(tables, function('s:map_item', ['string', 'table', 'T']))
+  endif
+
   if !empty(table_scope)
     let columns = s:get_table_scope_columns(buf.db, table_scope)
   elseif !empty(buffer_table_scope)
     let columns = s:get_table_scope_columns(buf.db, buffer_table_scope)
-  elseif !cache_db.fetch_columns_by_table
+  elseif !cache_db.fetch_columns_by_table && empty(schema_scope)
     let columns = copy(cache_db.columns)
   endif
 
@@ -150,7 +159,6 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
   endif
 
   let tables = []
-  let schemas = []
   if !has_key(s:buffers, a:bufnr)
     let s:buffers[a:bufnr] = {}
   endif
@@ -163,7 +171,6 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
     let s:buffers[a:bufnr].scheme = a:dbui.scheme
     if a:dbui.connected
       let tables = a:dbui.tables
-      let schemas = a:dbui.schemas
     endif
   else
     let parsed = db#url#parse(a:db)
@@ -180,7 +187,7 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
 
   let s:cache[a:db] = {
         \ 'tables': tables,
-        \ 'schemas': schemas,
+        \ 'schemas': {},
         \ 'columns': [],
         \ 'functions': [],
         \ 'columns_by_table': {},
@@ -200,11 +207,24 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
     if has_key(scheme, 'functions_query')
       call vim_dadbod_completion#job#run(s:generate_query(a:db, 'functions_query'), function('s:parse_functions', [a:db]))
     endif
+    if has_key(scheme, 'schemas_query')
+      call vim_dadbod_completion#job#run(s:generate_query(a:db, 'schemas_query'), function('s:parse_schemas', [a:db]))
+    endif
   endif
 endfunction
 
 function! s:parse_functions(db, functions) abort
   let s:cache[a:db].functions = s:cache[a:db].scheme.functions_parser(a:functions)
+endfunction
+
+function! s:parse_schemas(db, schemas) abort
+  let data = s:cache[a:db].scheme.schemas_parser(a:schemas)
+  for schema in data
+    if !has_key(s:cache[a:db].schemas, schema[0])
+      let s:cache[a:db].schemas[schema[0]] = []
+    endif
+    call add(s:cache[a:db].schemas[schema[0]], schema[1])
+  endfor
 endfunction
 
 function! s:generate_query(db, query_key, ...) abort
@@ -266,9 +286,16 @@ function! s:cache_table_columns(db, table_scope, result)
   call vim_dadbod_completion#utils#msg(printf('Fetching columns for table %s...Done.', a:table_scope))
 endfunction
 
-function! s:get_table_scope(buffer, table_scope) abort
+function! s:get_scope(buffer, table_scope, type) abort
   let cache_db = s:cache[a:buffer.db]
   if empty(a:table_scope)
+    return ''
+  endif
+
+  if a:type ==? 'schema'
+    if has_key(cache_db.schemas, a:table_scope)
+      return a:table_scope
+    endif
     return ''
   endif
 

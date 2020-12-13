@@ -1,3 +1,6 @@
+let s:quotes = vim_dadbod_completion#schemas#get_quotes_rgx()
+let s:trigger_rgx = printf('\(%s\|\.\)$', s:quotes.open)
+
 function! vim_dadbod_completion#compe#create() abort
   return {
         \ 'get_metadata': function('s:get_metadata'),
@@ -17,7 +20,7 @@ function! s:datermine(context) abort
   if offset > 0
     return {
           \   'keyword_pattern_offset': offset,
-          \   'trigger_character_offset': (char ==? '.' || char ==? '"') ? a:context.col : 0
+          \   'trigger_character_offset': char =~? s:trigger_rgx ? a:context.col : 0
           \ }
   endif
   return {}

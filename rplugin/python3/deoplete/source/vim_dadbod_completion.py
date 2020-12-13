@@ -7,7 +7,7 @@ class Source(Base):
         self.name = 'vim-dadbod-completion'
         self.mark = ''
         self.filetypes = ['sql']
-        self.input_pattern = '\w+|\.|"'
+        self.input_pattern = '\w+|\.|"|\[|`'
         self.rank = 500
         self.max_pattern_length = -1
         self.matchers = ['matcher_full_fuzzy']

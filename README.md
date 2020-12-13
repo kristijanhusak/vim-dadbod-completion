@@ -47,7 +47,7 @@ let g:compe.source.vim_dadbod_completion = v:true
 augroup completion
   autocmd!
   autocmd BufEnter * lua require'completion'.on_attach()
-  autocmd FileType sql let g:completion_trigger_character = ['.', '"']
+  autocmd FileType sql let g:completion_trigger_character = ['.', '"', '`', '[']
 augroup END
 
 " Source is automatically added, you just need to include it in the chain complete list

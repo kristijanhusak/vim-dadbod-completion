@@ -1,5 +1,6 @@
 let s:base_column_query = 'select table_name,column_name from information_schema.columns'
 let s:query = s:base_column_query.' order by column_name asc'
+let s:schema_query = 'select table_schema,table_name from information_schema.columns group by table_schema,table_name'
 let s:count_query = 'select count(*) as total from information_schema.columns'
 let s:table_column_query = s:base_column_query.' where table_name={db_tbl_name}'
 let s:reserved_words = vim_dadbod_completion#reserved_keywords#get_as_dict()
@@ -42,7 +43,9 @@ let s:postgres = {
       \ 'count_column_query': printf('-A -c "%s"', s:count_query),
       \ 'table_column_query': {table -> printf('-A -c "%s"', substitute(s:table_column_query, '{db_tbl_name}', "'".table."'", ''))},
       \ 'functions_query': printf('-A -c "%s"', "SELECT routine_name FROM information_schema.routines WHERE routine_type='FUNCTION'"),
-      \ 'functions_parser': {list->list[0:-4]},
+      \ 'functions_parser': {list->list[1:-4]},
+      \ 'schemas_query': printf('-A -c "%s"', s:schema_query),
+      \ 'schemas_parser': function('s:map_and_filter', ['|']),
       \ 'quote': ['"', '"'],
       \ 'should_quote': function('s:should_quote', [['camelcase', 'reserved_word', 'space']]),
       \ 'column_parser': function('s:map_and_filter', ['|']),
@@ -57,6 +60,8 @@ let s:oracle = {
 \   'count_column_query': printf(s:oracle_args, "COLUMN total FORMAT 9999999;\nSELECT COUNT(*) AS total FROM all_tab_columns C JOIN all_users U ON C.owner = U.username WHERE U.common = 'NO';"),
 \   'count_parser': function('s:count_parser', [1]),
 \   'quote': ['"', '"'],
+\   'schemas_query': printf(s:oracle_args, "COLUMN owner FORMAT a20;\nCOLUMN table_name FORMAT a25;\nSELECT T.owner, T.table_name FROM all_tables T JOIN all_users U ON T.owner = U.username WHERE U.common = 'NO' ORDER BY T.table_name;"),
+\   'schemas_parser': function('s:map_and_filter', ['\s\s\+']),
 \   'should_quote': function('s:should_quote', [['camelcase', 'reserved_word', 'space']]),
 \   'table_column_query': {table -> printf(s:oracle_base_column_query, "AND C.table_name='".table."'")},
 \ }
@@ -68,6 +73,8 @@ let s:schemas = {
       \   'column_query': printf('-e "%s"', s:query),
       \   'count_column_query': printf('-e "%s"', s:count_query),
       \   'table_column_query': {table -> printf('-e "%s"', substitute(s:table_column_query, '{db_tbl_name}', "'".table."'", ''))},
+      \   'schemas_query': printf('-e "%s"', s:schema_query),
+      \   'schemas_parser': function('s:map_and_filter', ['\t']),
       \   'quote': ['`', '`'],
       \   'should_quote': function('s:should_quote', [['reserved_word', 'space']]),
       \   'column_parser': function('s:map_and_filter', ['\t']),
@@ -78,6 +85,8 @@ let s:schemas = {
       \   'column_query': printf('-h-1 -W -s "|" -Q "%s"', s:query),
       \   'count_column_query': printf('-h-1 -W -Q "%s"', s:count_query),
       \   'table_column_query': {table -> printf('-h-1 -W -Q "%s"', substitute(s:table_column_query, '{db_tbl_name}', "'".table."'", ''))},
+      \   'schemas_query': printf('-h-1 -W -s "|" -Q "%s"', s:schema_query),
+      \   'schemas_parser': function('s:map_and_filter', ['|']),
       \   'quote': ['[', ']'],
       \   'should_quote': function('s:should_quote', [['reserved_word', 'space']]),
       \   'column_parser': function('s:map_and_filter', ['|']),
