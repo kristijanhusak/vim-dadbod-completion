@@ -4,7 +4,7 @@ let s:trigger_rgx = printf('\(%s\|\.\)$', s:quotes.open)
 function! vim_dadbod_completion#compe#create() abort
   return {
         \ 'get_metadata': function('s:get_metadata'),
-        \ 'datermine': function('s:datermine'),
+        \ 'determine': function('s:determine'),
         \ 'documentation': function('s:documentation'),
         \ 'complete': function('s:complete'),
         \ }
@@ -14,7 +14,7 @@ function! s:get_metadata(...) abort
   return { 'filetypes': ['sql'], 'priority': 100, 'dup': 0 }
 endfunction
 
-function! s:datermine(context) abort
+function! s:determine(context) abort
   let offset = vim_dadbod_completion#omni(1, '') + 1
   let char = a:context.before_char
   if offset > 0
