@@ -264,6 +264,11 @@ function! s:get_table_scope_columns(db, table_scope) abort
   if has_key(s:cache[a:db].columns_by_table, a:table_scope)
     return copy(s:cache[a:db].columns_by_table[a:table_scope])
   endif
+
+  if empty(s:cache[a:db].scheme)
+    return []
+  endif
+
   let g:vim_dadbod_completion_refresh_deoplete = 1
 
   call vim_dadbod_completion#utils#msg(printf('Fetching columns for table %s...', a:table_scope))
