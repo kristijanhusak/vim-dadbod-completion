@@ -231,6 +231,9 @@ endfunction
 
 function! s:generate_query(db, query_key, ...) abort
   let base_query = db#adapter#dispatch(a:db, 'interactive')
+  if type(base_query) ==? type([])
+    let base_query = join(base_query)
+  endif
   let Query = s:cache[a:db].scheme[a:query_key]
   if a:0 > 0
     let Query = Query(a:1)
