@@ -357,7 +357,7 @@ function! s:get_buffer_db_info(bufnr) abort
   endif
   if !empty(db)
     call vim_dadbod_completion#utils#msg('Connecting to db...')
-    let db = db#connect(db)
+    let db = db#connect(db#resolve(db))
     call vim_dadbod_completion#utils#msg('Connecting to db...Done.')
   endif
   let db_table = getbufvar(a:bufnr, 'db_table')
