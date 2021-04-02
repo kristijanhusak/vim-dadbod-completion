@@ -1,5 +1,6 @@
 let s:cache = {}
 let s:buffers = {}
+let s:filetypes = ['sql', 'mysql', 'plsql']
 
 let s:quotes = vim_dadbod_completion#schemas#get_quotes_rgx()
 let s:trigger_rgx = printf('\(%s\|\.\)$', s:quotes.open)
@@ -147,7 +148,7 @@ function! vim_dadbod_completion#fetch(bufnr) abort
     let g:db_adapter_sqlite3 = 'db#adapter#sqlite#'
   endif
 
-  if getbufvar(a:bufnr, '&filetype') !=? 'sql' && empty(getbufvar(a:bufnr, 'dbui_db_key_name'))
+  if index(s:filetypes, getbufvar(a:bufnr, '&filetype')) < 0 && empty(getbufvar(a:bufnr, 'dbui_db_key_name'))
     return
   endif
   let db_info = s:get_buffer_db_info(a:bufnr)

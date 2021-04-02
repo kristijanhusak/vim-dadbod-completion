@@ -2,6 +2,7 @@ const { sources, workspace } = require('coc.nvim');
 const { nvim } = workspace;
 const path = require('path');
 const rtpPath = path.resolve(__dirname, '../');
+const validFiletypes = ['sql', 'mysql', 'plsql']
 
 
 exports.activate = async (context) => {
@@ -15,14 +16,14 @@ exports.activate = async (context) => {
 
   const currentDoc = await workspace.document;
   const dbui_key_name = await nvim.call('getbufvar', [currentDoc.bufnr, 'dbui_db_key_name']);
-  if (currentDoc.filetype === 'sql' || dbui_key_name) {
+  if (validFiletypes.indexOf(currentDoc.filetype) > -1 || dbui_key_name) {
     nvim.call('vim_dadbod_completion#fetch', [currentDoc.bufnr]);
   }
 
   workspace.onDidOpenTextDocument(async e => {
     const doc = workspace.getDocument(e.uri);
     const dbui_key_name = await nvim.call('getbufvar', [doc.bufnr, 'dbui_db_key_name']);
-    if (doc.filetype === 'sql' || dbui_key_name) {
+    if (validFiletypes.indexOf(doc.filetype) > -1 || dbui_key_name) {
       return nvim.call('vim_dadbod_completion#fetch', [doc.bufnr]);
     }
   });
