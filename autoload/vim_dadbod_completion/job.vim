@@ -26,9 +26,9 @@ function! s:nvim_job_cb(jobid, data, event) dict abort
   call extend(self.output, a:data)
 endfunction
 
-function! vim_dadbod_completion#job#run(cmd, callback) abort
+function! vim_dadbod_completion#job#run(cmd, callback, stdin) abort
   if has('nvim')
-    return jobstart(a:cmd, {
+    let jobid = jobstart(a:cmd, {
           \ 'on_stdout': function('s:nvim_job_cb'),
           \ 'on_stderr': function('s:nvim_job_cb'),
           \ 'on_exit': function('s:nvim_job_cb'),
@@ -37,6 +37,13 @@ function! vim_dadbod_completion#job#run(cmd, callback) abort
           \ 'stdout_buffered': 1,
           \ 'stderr_buffered': 1,
           \ })
+
+    if !empty(a:stdin)
+      call chansend(jobid, a:stdin)
+      call chanclose(jobid, 'stdin')
+    endif
+
+    return jobid
   endif
 
   if exists('*job_start')
@@ -54,13 +61,14 @@ function! vim_dadbod_completion#job#run(cmd, callback) abort
       let opts['noblock'] = 1
     endif
 
-    if has('win32')
-        return job_start(printf('%s %s %s', &shell, &shellcmdflag, a:cmd), opts)
-    else
-        return job_start([&shell, &shellcmdflag, a:cmd], opts)
-    endif
-  endif
+    let job = job_start(a:cmd, opts)
 
-  let list = systemlist(a:cmd)
-  return a:callback(list)
+    if !empty(a:stdin)
+      call ch_sendraw(job, a:stdin)
+      call ch_close_in(job)
+      let fn.close = 1
+    endif
+
+    return job
+  endif
 endfunction
