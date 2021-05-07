@@ -8,6 +8,8 @@ let s:findstart_rgx = printf('\(^\|\s\+\|\.\|(\|%s\)\@<=\w\+\(%s\)\?$', s:quotes
 let s:table_scope_rgx = printf('\(%s\)\?\(\w\+\)\(%s\)\?\.\(%s\)\?\w*\(%s\)\?$', s:quotes.open, s:quotes.close, s:quotes.open, s:quotes.close)
 let s:filter_rgx = printf('^\(%s\)\?', s:quotes.open)
 let s:mark = get(g:, 'vim_dadbod_completion_mark', '[DB]')
+let s:default_limit = 50
+let s:limits = get(g:, 'vim_dadbod_completion_source_limits', {})
 
 function! vim_dadbod_completion#omni(findstart, base)
   let line = getline('.')[0:col('.') - 2]
@@ -72,12 +74,14 @@ function! vim_dadbod_completion#omni(findstart, base)
     if should_filter
       call filter(tables, 'v:val =~? s:filter_rgx.a:base')
     endif
+    let tables = tables[0:s:limit('tables')]
     call map(tables, function('s:map_item', ['string', 'table', 'T']))
 
     let schemas = keys(cache_db.schemas)
     if should_filter
       call filter(schemas, 'v:val =~? s:filter_rgx.a:base')
     endif
+    let schemas = schemas[0:s:limit('schemas')]
     call map(schemas, function('s:map_item', ['string', 'schema', 'S']))
 
     let aliases = items(s:buffers[bufnr].aliases)
@@ -91,6 +95,7 @@ function! vim_dadbod_completion#omni(findstart, base)
       if !empty(a:base)
         call filter(reserved_words, 'v:val =~? ''^''.a:base')
       endif
+      let reserved_words = reserved_words[0:s:limit('reserved_words')]
       call map(reserved_words, {i,word -> {'word': word, 'abbr': word, 'menu': s:mark, 'info': 'SQL reserved word', 'kind': 'R' }})
     endif
 
@@ -99,6 +104,7 @@ function! vim_dadbod_completion#omni(findstart, base)
       call filter(functions, 'v:val =~? ''^''.a:base')
     endif
 
+    let functions = functions[0:s:limit('functions')]
     call map(functions, {i,fn -> {'word': fn, 'abbr': fn, 'menu': s:mark, 'info': 'Function', 'kind': 'F' }})
   endif
 
@@ -107,6 +113,7 @@ function! vim_dadbod_completion#omni(findstart, base)
     if should_filter
       call filter(tables, 'v:val =~? s:filter_rgx.a:base')
     endif
+    let tables = tables[0:s:limit('tables')]
     call map(tables, function('s:map_item', ['string', 'table', 'T']))
   endif
 
@@ -122,6 +129,7 @@ function! vim_dadbod_completion#omni(findstart, base)
     call filter(columns, 'v:val[1] =~? s:filter_rgx.a:base')
   endif
 
+  let columns = columns[0:s:limit('columns')]
   call map(columns, function('s:map_item', ['list', '%s table column', 'C']))
 
   return bind_params + schemas + tables + aliases + columns + reserved_words + functions
@@ -385,6 +393,10 @@ function! s:quote(val) abort
   let left_wrap = match(line, l_quote_esc.'\w*\%'.col('.').'c') > -1 ? '' : l_quote
   let right_wrap = matchstr(line, '\%>'.(col('.') - 1).'c['.r_quote_esc.' \.]') !=? r_quote ? r_quote : ''
   return left_wrap.a:val.right_wrap
+endfunction
+
+function! s:limit(type)
+  return get(s:limits, a:type, s:default_limit)
 endfunction
 
 function! vim_dadbod_completion#refresh_deoplete() abort

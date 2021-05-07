@@ -86,10 +86,37 @@ HOW IT WORKS                                  *vim-dadbod-completion-how_it_work
 --------------------------------------------------------------------------------
 SETTINGS                                          *vim-dadbod-completion-settings*
 
-Default mark for completion items is `[DB]`. To change it, add this to vimrc:
+:
+					      *g:vim_dadbod_completion_mark*
+g:vim_dadbod_completion_mark
+		Mark for completion items. To change it, add this to vimrc
 >
-    let g:vim_dadbod_completion_mark = 'MYMARK'
+		let g:vim_dadbod_completion_mark = 'MYMARK'
 <
+
+		Default value: `[DB]`
+
+					      *g:vim_dadbod_completion_source_limits*
+g:vim_dadbod_completion_source_limits
+		Completion items are fetched from multiple sources.
+		Each source is by default limited to maximum of `50` entries.
+		Example configuration:
+>
+		let g:vim_dadbod_completion_source_limits = {
+		    \ 'schemas': 150,
+		    \ 'tables': 100,
+		    \ 'columns': 120,
+		    \ 'reserved_words': 140,
+		    \ 'functions': 50
+		    \ }
+<
+		NOTE: `functions` source is currently available only for `PostgreSQL`
+		and it returns list of sql functions available in the
+		database.
+		Source type that is not in the configuration variable defaults
+		to `50`.
+
+		Default value: `{}`
 
 --------------------------------------------------------------------------------
 TODO                                                  *vim-dadbod-completion-todo*
