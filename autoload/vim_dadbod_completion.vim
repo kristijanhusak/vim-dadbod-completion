@@ -8,7 +8,7 @@ let s:findstart_rgx = printf('\(^\|\s\+\|\.\|(\|%s\)\@<=\w\+\(%s\)\?$', s:quotes
 let s:table_scope_rgx = printf('\(%s\)\?\(\w\+\)\(%s\)\?\.\(%s\)\?\w*\(%s\)\?$', s:quotes.open, s:quotes.close, s:quotes.open, s:quotes.close)
 let s:filter_rgx = printf('^\(%s\)\?', s:quotes.open)
 let s:mark = get(g:, 'vim_dadbod_completion_mark', '[DB]')
-let s:default_limit = 50
+let s:default_limit = 200
 let s:limits = get(g:, 'vim_dadbod_completion_source_limits', {})
 
 function! vim_dadbod_completion#omni(findstart, base)

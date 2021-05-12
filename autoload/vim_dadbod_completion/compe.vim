@@ -36,6 +36,6 @@ function! s:complete(args) abort
   for item in items
     let item.filter_text = item.abbr
   endfor
-  call a:args.callback({ 'items': items })
+  call a:args.callback({ 'items': items, 'incomplete': v:true })
 endfunction
 

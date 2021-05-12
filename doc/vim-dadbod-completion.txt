@@ -99,7 +99,7 @@ g:vim_dadbod_completion_mark
 					      *g:vim_dadbod_completion_source_limits*
 g:vim_dadbod_completion_source_limits
 		Completion items are fetched from multiple sources.
-		Each source is by default limited to maximum of `50` entries.
+		Each source is by default limited to maximum of `200` entries.
 		Example configuration:
 >
 		let g:vim_dadbod_completion_source_limits = {
@@ -114,7 +114,7 @@ g:vim_dadbod_completion_source_limits
 		and it returns list of sql functions available in the
 		database.
 		Source type that is not in the configuration variable defaults
-		to `50`.
+		to `200`.
 
 		Default value: `{}`
 
