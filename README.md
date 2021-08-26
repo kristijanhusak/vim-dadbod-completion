@@ -6,6 +6,7 @@ Supports:
 * [deoplete.nvim](https://github.com/Shougo/deoplete.nvim)
 * [completion-nvim](https://github.com/haorenW1025/completion-nvim)
 * [nvim-compe](https://github.com/hrsh7th/nvim-compe)
+* [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
 * Built in `omnifunc`
 
 ![coc-db](https://user-images.githubusercontent.com/1782860/78941173-717f6680-7ab7-11ea-91b3-18bf178b3735.gif)
@@ -42,6 +43,9 @@ autocmd FileType sql setlocal omnifunc=vim_dadbod_completion#omni
 
 " hrsh7th/nvim-compe
 let g:compe.source.vim_dadbod_completion = v:true
+
+" hrsh7th/nvim-cmp
+  autocmd FileType sql,mysql,plsql lua require('cmp').setup.buffer({ sources = {{ name = 'vim-dadbod-completion' }} })
 
 " For completion-nvim
 augroup completion
