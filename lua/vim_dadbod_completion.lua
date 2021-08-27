@@ -43,6 +43,9 @@ function nvim_cmp_source:complete(params, callback)
       label = item.abbr,
       dup = 0,
       insertText = item.word,
+      labelDetails = {
+        description = item.menu,
+      },
       documentation = item.info,
     })
   end
