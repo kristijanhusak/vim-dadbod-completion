@@ -7,6 +7,7 @@ Supports:
 * [completion-nvim](https://github.com/haorenW1025/completion-nvim)
 * [nvim-compe](https://github.com/hrsh7th/nvim-compe)
 * [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
+* [ddc.vim](https://github.com/Shougo/ddc.vim)
 * Built in `omnifunc`
 
 ![coc-db](https://user-images.githubusercontent.com/1782860/78941173-717f6680-7ab7-11ea-91b3-18bf178b3735.gif)
@@ -21,7 +22,7 @@ For [coc.nvim](https://github.com/neoclide/coc.nvim)
 :CocInstall coc-db
 ```
 
-For `deoplete`, `completion-nvim`, `nvim-compe` and `omnifunc`, install it with your favorite plugin manager.
+For `deoplete`, `completion-nvim`, `nvim-compe`, `ddc` and `omnifunc`, install it with your favorite plugin manager.
 
 ```vimL
 function! PackagerInit() abort
@@ -36,6 +37,9 @@ function! PackagerInit() abort
   call packager#add('haorenW1025/completion-nvim')
   "or
   call packager#add('hrsh7th/nvim-compe')
+  "or
+  call packager#add('vim-denops/denops.vim')
+  call packager#add('Shougo/ddc.vim')
 endfunction
 
 " For built in omnifunc
@@ -53,6 +57,15 @@ augroup completion
   autocmd BufEnter * lua require'completion'.on_attach()
   autocmd FileType sql let g:completion_trigger_character = ['.', '"', '`', '[']
 augroup END
+
+" Shougo/ddc.vim
+ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sources', 'dadbod-completion')
+ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sourceOptions', {
+\ 'dadbod-completion': {
+\   'mark': 'DB',
+\   'isVolatile': v:true,
+\ },
+\ })
 
 " Source is automatically added, you just need to include it in the chain complete list
 let g:completion_chain_complete_list = {
