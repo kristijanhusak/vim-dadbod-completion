@@ -59,8 +59,8 @@ augroup completion
 augroup END
 
 " Shougo/ddc.vim
-ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sources', 'dadbod-completion')
-ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sourceOptions', {
+call ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sources', 'dadbod-completion')
+call ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sourceOptions', {
 \ 'dadbod-completion': {
 \   'mark': 'DB',
 \   'isVolatile': v:true,
