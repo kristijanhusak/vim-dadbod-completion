@@ -148,6 +148,10 @@ function! s:map_item(type, info_val, kind, index, item) abort
 endfunction
 
 function! vim_dadbod_completion#fetch(bufnr) abort
+  if !has('nvim') && !exists('*job_start')
+    let s:buffers[a:bufnr] = {}
+    return
+  endif
   if !exists('g:db_adapter_postgres')
     let g:db_adapter_postgres = 'db#adapter#postgresql#'
   endif
@@ -214,12 +218,15 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
   let scheme = vim_dadbod_completion#schemas#get(s:buffers[a:bufnr].scheme)
   let s:cache[a:db].scheme = scheme
   if !empty(scheme)
-    call vim_dadbod_completion#job#run(s:generate_query(a:db, 'count_column_query'), function('s:count_columns_and_cache', [a:db]))
+    let ccq = s:generate_query(a:db, 'count_column_query')
+    call vim_dadbod_completion#job#run(ccq[0], function('s:count_columns_and_cache', [a:db]), ccq[1])
     if has_key(scheme, 'functions_query')
-      call vim_dadbod_completion#job#run(s:generate_query(a:db, 'functions_query'), function('s:parse_functions', [a:db]))
+      let fnq = s:generate_query(a:db, 'functions_query')
+      call vim_dadbod_completion#job#run(fnq[0], function('s:parse_functions', [a:db]), fnq[1])
     endif
     if has_key(scheme, 'schemas_query')
-      call vim_dadbod_completion#job#run(s:generate_query(a:db, 'schemas_query'), function('s:parse_schemas', [a:db]))
+      let scmq = s:generate_query(a:db, 'schemas_query')
+      call vim_dadbod_completion#job#run(scmq[0], function('s:parse_schemas', [a:db]), scmq[1])
     endif
   endif
 endfunction
@@ -239,21 +246,23 @@ function! s:parse_schemas(db, schemas) abort
 endfunction
 
 function! s:generate_query(db, query_key, ...) abort
-  let base_query = db#adapter#dispatch(a:db, 'interactive')
-  if type(base_query) ==? type([])
-    let base_query = join(base_query)
-  endif
-  let Query = s:cache[a:db].scheme[a:query_key]
+  let scheme = s:cache[a:db].scheme
+  let base_query = db#adapter#dispatch(a:db, 'interactive') + get(scheme, 'args', [])
+  let Query = scheme[a:query_key]
   if a:0 > 0
     let Query = Query(a:1)
   endif
-  return db#url#parse(a:db).scheme ==? 'oracle' ? printf('%s %s', Query, base_query) : printf('%s %s', base_query, Query)
+  if get(scheme, 'requires_stdin')
+    return [base_query, Query]
+  endif
+  return [base_query + [Query], '']
 endfunction
 
 function! s:count_columns_and_cache(db, count) abort
   let column_count = s:cache[a:db].scheme.count_parser(a:count)
   if column_count <= 10000
-    call vim_dadbod_completion#job#run(s:generate_query(a:db, 'column_query'), function('s:cache_all_columns', [a:db]))
+    let [query, stdin] = s:generate_query(a:db, 'column_query')
+    call vim_dadbod_completion#job#run(query, function('s:cache_all_columns', [a:db]), stdin)
   endif
 endfunction
 
@@ -284,8 +293,8 @@ function! s:get_table_scope_columns(db, table_scope) abort
   let g:vim_dadbod_completion_refresh_deoplete = 1
 
   call vim_dadbod_completion#utils#msg(printf('Fetching columns for table %s...', a:table_scope))
-  let query = s:generate_query(a:db, 'table_column_query', a:table_scope)
-  call vim_dadbod_completion#job#run(query, function('s:cache_table_columns', [a:db, a:table_scope]))
+  let [query, stdin] = s:generate_query(a:db, 'table_column_query', a:table_scope)
+  call vim_dadbod_completion#job#run(query, function('s:cache_table_columns', [a:db, a:table_scope]), stdin)
   return []
 endfunction
 
@@ -297,6 +306,8 @@ function! s:cache_table_columns(db, table_scope, result)
     call coc#start()
   elseif exists('g:loaded_deoplete')
     let g:vim_dadbod_completion_refresh_deoplete = 0
+  elseif exists('g:loaded_compe')
+    call compe#complete()
   elseif exists('g:loaded_completion') && exists('*completion#completion_wrapper')
     call completion#completion_wrapper()
   elseif &omnifunc ==? 'vim_dadbod_completion#omni'
