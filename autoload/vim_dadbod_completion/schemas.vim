@@ -84,6 +84,16 @@ let s:schemas = {
       \   'count_parser': function('s:count_parser', [1])
       \ },
       \ 'oracle': s:oracle,
+      \ 'sqlite': {
+      \   'args': ['-list'],
+      \   'column_query': "SELECT m.name AS table_name, ii.name AS column_name FROM sqlite_schema AS m, pragma_table_list(m.name) AS il, pragma_table_info(il.name) AS ii WHERE m.type='table' ORDER BY column_name ASC;",
+      \   'count_column_query': "SELECT count(*) AS total FROM sqlite_schema AS m, pragma_table_list(m.name) AS il, pragma_table_info(il.name) AS ii WHERE m.type='table';",
+      \   'table_column_query': {table -> substitute("SELECT m.name AS table_name, ii.name AS column_name FROM sqlite_schema AS m, pragma_table_list(m.name) AS il, pragma_table_info(il.name) AS ii WHERE m.type='table' AND table_name={db_tbl_name};", '{db_tbl_name}', "'".table."'", '')},
+      \   'quote': ['"', '"'],
+      \   'should_quote': function('s:should_quote', [['reserved_word', 'space']]),
+      \   'column_parser': function('s:map_and_filter', ['|']),
+      \   'count_parser': function('s:count_parser', [1]),
+      \ },
       \ 'sqlserver': {
       \   'args': ['-h-1', '-W', '-s', '|', '-Q'],
       \   'column_query': s:query,
