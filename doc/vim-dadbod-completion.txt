@@ -131,6 +131,14 @@ g:vim_dadbod_completion_source_limits
 		Default value: `{}`
 
 --------------------------------------------------------------------------------
+COMMANDS                                          *vim-dadbod-completion-commands*
+
+This plugin caches the database tables and columns to leverage maximum performance. If you want to clear the cache at any point just run:
+>
+    :DBCompletionClearCache
+<
+
+--------------------------------------------------------------------------------
 TODO                                                  *vim-dadbod-completion-todo*
 
 *   [ ] Integration for column autocompletion with more database types

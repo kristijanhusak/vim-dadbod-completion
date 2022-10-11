@@ -94,5 +94,12 @@ Default mark for completion items is `[DB]`. To change it, add this to vimrc:
 let g:vim_dadbod_completion_mark = 'MYMARK'
 ```
 
+## Commands
+This plugin caches the database tables and columns to leverage maximum performance. If you want to clear the cache at any point just run:
+
+```
+:DBCompletionClearCache
+```
+
 ## Todo
 * [ ] Integration for column autocompletion with more database types

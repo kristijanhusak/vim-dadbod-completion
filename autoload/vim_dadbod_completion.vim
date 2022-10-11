@@ -147,6 +147,16 @@ function! s:map_item(type, info_val, kind, index, item) abort
         \ }
 endfunction
 
+function vim_dadbod_completion#clear_cache() abort
+  let s:cache = {}
+  call vim_dadbod_completion#utils#msg('Cache cleared')
+  if index(s:filetypes, &filetype) > -1
+    call vim_dadbod_completion#utils#msg('Reloading completion for current buffer...')
+    call vim_dadbod_completion#fetch(bufnr(''))
+    call vim_dadbod_completion#utils#msg('Reloading completion for current buffer...Done.')
+  endif
+endfunction
+
 function! vim_dadbod_completion#fetch(bufnr) abort
   if !has('nvim') && !exists('*job_start')
     let s:buffers[a:bufnr] = {}
