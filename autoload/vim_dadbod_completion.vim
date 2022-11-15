@@ -223,8 +223,10 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
     let tables = db#adapter#call(a:db, 'tables', [a:db], [])
     let s:cache[a:db].tables = uniq(tables)
     let s:cache[a:db].tables_list = copy(s:cache[a:db].tables)
+    call map(s:cache[a:db].tables, function('s:map_item', ['string', 'table', 'T']))
+  elseif type(s:cache[a:db].tables[0]) ==? type('')
+    call map(s:cache[a:db].tables, function('s:map_item', ['string', 'table', 'T']))
   endif
-  call map(s:cache[a:db].tables, function('s:map_item', ['string', 'table', 'T']))
 
   let scheme = vim_dadbod_completion#schemas#get(s:buffers[a:bufnr].scheme)
   let s:cache[a:db].scheme = scheme
