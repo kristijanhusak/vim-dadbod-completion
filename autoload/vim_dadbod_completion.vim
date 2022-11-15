@@ -193,7 +193,7 @@ function! s:save_to_cache(bufnr, db, table, dbui) abort
   if !empty(a:dbui)
     let s:buffers[a:bufnr].scheme = a:dbui.scheme
     if a:dbui.connected
-      let tables = a:dbui.tables
+      let tables = copy(a:dbui.tables)
     endif
   else
     let parsed = db#url#parse(a:db)
