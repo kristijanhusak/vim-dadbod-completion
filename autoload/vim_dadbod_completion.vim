@@ -285,12 +285,8 @@ endfunction
 
 function! s:cache_all_columns(db, result) abort
   let columns = call(s:cache[a:db].scheme.column_parser, [a:result])
-  let s:cache[a:db].columns = copy(columns)
-  call map(s:cache[a:db].columns, function('s:map_item', ['list', '%s table column', 'C']))
+  let s:cache[a:db].columns = map(copy(columns), function('s:map_item', ['list', '%s table column', 'C']))
   call map(copy(columns), function('s:map_columns_by_table', [a:db]))
-  for k in keys(s:cache[a:db].columns_by_table)
-    call map(s:cache[a:db].columns_by_table[k], function('s:map_item', ['list', '%s table column', 'C']))
-  endfor
   let s:cache[a:db].fetch_columns_by_table = 0
 endfunction
 
@@ -298,7 +294,7 @@ function! s:map_columns_by_table(db, index, column) abort
   if !has_key(s:cache[a:db].columns_by_table, a:column[0])
     let s:cache[a:db].columns_by_table[a:column[0]] = []
   endif
-  call add(s:cache[a:db].columns_by_table[a:column[0]], a:column)
+  call add(s:cache[a:db].columns_by_table[a:column[0]], s:map_item('list', '%s table column', 'C', 0, a:column))
   return a:column
 endfunction
 
