@@ -130,14 +130,14 @@ function! vim_dadbod_completion#omni(findstart, base)
 
   let columns = columns[0:s:limit('columns')]
 
-  return bind_params + schemas + tables + aliases + columns + reserved_words + functions
+  return s:quote_results(bind_params + schemas + tables + aliases + columns + reserved_words + functions)
 endfunction
 
 function! s:map_item(type, info_val, kind, index, item) abort
   let word = a:type ==? 'string' ? a:item : a:item[1]
   let info = a:type ==? 'string' ? a:info_val : printf(a:info_val, a:item[0])
   return {
-        \ 'word': s:quote(word),
+        \ 'word': word,
         \ 'abbr': word,
         \ 'menu': s:mark,
         \ 'kind': a:kind,
@@ -405,13 +405,21 @@ function! s:get_buffer_db_info(bufnr) abort
         \ }
 endfunction
 
-function! s:quote(val) abort
+function! s:quote(scheme, left_wrap, right_wrap, index, item) abort
+  if a:scheme.should_quote(a:item.abbr)
+    let a:item.word = a:left_wrap.a:item.abbr.a:right_wrap
+  endif
+  return a:item
+endfunction
+
+function! s:quote_results(results) abort
   if !has_key(s:buffers, bufnr('%'))
-    return a:val
+    return a:results
   endif
   let scheme = vim_dadbod_completion#schemas#get(s:buffers[bufnr('%')].scheme)
-  if empty(scheme) || !scheme.should_quote(a:val)
-    return a:val
+
+  if empty(scheme)
+    return a:results
   endif
 
   let line = getline('.')
@@ -420,10 +428,11 @@ function! s:quote(val) abort
   let r_quote_esc = escape(r_quote, ']')
   let left_wrap = match(line, l_quote_esc.'\w*\%'.col('.').'c') > -1 ? '' : l_quote
   let right_wrap = matchstr(line, '\%>'.(col('.') - 1).'c['.r_quote_esc.' \.]') !=? r_quote ? r_quote : ''
-  return left_wrap.a:val.right_wrap
+
+  return map(a:results, function('s:quote', [scheme, left_wrap, right_wrap]))
 endfunction
 
-function! s:limit(type)
+function! s:limit(type) abort
   return get(s:limits, a:type, s:default_limit)
 endfunction
 
