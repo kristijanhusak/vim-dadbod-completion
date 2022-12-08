@@ -406,7 +406,7 @@ function! s:get_buffer_db_info(bufnr) abort
 endfunction
 
 function! s:quote(scheme, left_wrap, right_wrap, index, item) abort
-  if a:scheme.should_quote(a:item.abbr)
+  if a:item.kind !=? 'F' && a:item.kind !=? 'R' && a:scheme.should_quote(a:item.abbr)
     let a:item.word = a:left_wrap.a:item.abbr.a:right_wrap
   endif
   return a:item
