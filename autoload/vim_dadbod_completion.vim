@@ -10,7 +10,8 @@ let s:filter_rgx = printf('^\(%s\)\?', s:quotes.open)
 let s:mark = get(g:, 'vim_dadbod_completion_mark', '[DB]')
 let s:default_limit = 200
 let s:limits = get(g:, 'vim_dadbod_completion_source_limits', {})
-let s:mapped_reserved_words = map(copy(vim_dadbod_completion#reserved_keywords#get()), {i,word ->
+let s:lowercase_keywords = get(g:, 'vim_dadbod_completion_lowercase_keywords', 0)
+let s:mapped_reserved_words = map(copy(vim_dadbod_completion#reserved_keywords#get(s:lowercase_keywords)), {i,word ->
       \ {'word': word, 'abbr': word, 'menu': s:mark, 'info': 'SQL reserved word', 'kind': 'R' }
       \ })
 
