@@ -130,6 +130,15 @@ g:vim_dadbod_completion_source_limits
 
 		Default value: `{}`
 
+					      *g:vim_dadbod_completion_lowercase_keywords*
+g:vim_dadbod_completion_lowercase_keywords
+		Use lower case for keywords completions. Add this to vimrc
+>
+		let vim_dadbod_completion_lowercase_keywords = 1
+<
+
+		Default value: `0`
+
 --------------------------------------------------------------------------------
 COMMANDS                                          *vim-dadbod-completion-commands*
 
