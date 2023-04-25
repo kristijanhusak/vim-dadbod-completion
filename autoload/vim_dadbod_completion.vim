@@ -388,10 +388,13 @@ function! s:get_buffer_db_info(bufnr) abort
           \ }
   endif
 
-  let db = getbufvar(a:bufnr, 'db')
-  if empty(db)
-    let db = get(g:, 'db', '')
-  endif
+  let db = $DATABASE_URL
+  for dict in [w:, t:, b:, g:]
+    if has_key(dict, 'db') && !empty(dict.db)
+      let db = dict.db
+      break
+    endif
+  endfor
   if !empty(db)
     call vim_dadbod_completion#utils#msg('Connecting to db...')
     let db = db#connect(db#resolve(db))

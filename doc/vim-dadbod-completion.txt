@@ -93,7 +93,7 @@ FEATURES                                          *vim-dadbod-completion-feature
 HOW IT WORKS                                  *vim-dadbod-completion-how_it_works*
 
 *   If an sql buffer is created by vim-dadbod-ui (https://github.com/kristijanhusak/vim-dadbod-ui), it reads all the configuration from there. It should work out of the box.
-*   If `vim-dadbod-ui` is not used, vim-dadbod (https://github.com/tpope/vim-dadbod) `g:db` or `b:db` is used. If you want, you can also add `b:db_table` to limit autocompletions to that table only.
+*   If `vim-dadbod-ui` is not used, vim-dadbod (https://github.com/tpope/vim-dadbod) environment variable `$DATABASE_URL` or `w:db`, `t:db`, `b:db`, `g:db` used, whichever is found first. If you want, you can also add `b:db_table` to limit autocompletions to that table only.
 
 --------------------------------------------------------------------------------
 SETTINGS                                          *vim-dadbod-completion-settings*
