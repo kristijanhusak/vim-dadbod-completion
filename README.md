@@ -22,7 +22,7 @@ For [coc.nvim](https://github.com/neoclide/coc.nvim)
 :CocInstall coc-db
 ```
 
-For `deoplete`, `completion-nvim`, `nvim-compe`, `ddc` and `omnifunc`, install it with your favorite plugin manager.
+For `deoplete`, `completion-nvim`, `nvim-compe`, `ddc.vim` and `omnifunc`, install it with your favorite plugin manager.
 
 ```vimL
 function! PackagerInit() abort
@@ -40,6 +40,7 @@ function! PackagerInit() abort
   "or
   call packager#add('vim-denops/denops.vim')
   call packager#add('Shougo/ddc.vim')
+  call packager#add('Shougo/ddc-source-omni')
 endfunction
 
 " For built in omnifunc
@@ -59,13 +60,17 @@ augroup completion
 augroup END
 
 " Shougo/ddc.vim
-call ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sources', 'dadbod-completion')
-call ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sourceOptions', {
-\ 'dadbod-completion': {
-\   'mark': 'DB',
-\   'isVolatile': v:true,
-\ },
-\ })
+call ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], #{
+    \   sources: ['omni'],
+    \   sourceOptions: #{
+    \    omni: #{
+    \     mark: 'O',
+    \     isVolatile: v:true,
+    \     omnifunc: 'vim_dadbod_completion#omni',
+    \   },
+    \  },
+    \  keywordPattern: '\w+|\.|"|\[|`'
+    \ })
 
 " Source is automatically added, you just need to include it in the chain complete list
 let g:completion_chain_complete_list = {

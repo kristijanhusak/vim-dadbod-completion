@@ -35,7 +35,7 @@ For coc.nvim (https://github.com/neoclide/coc.nvim)
     :CocInstall coc-db
 <
 
-For `deoplete`, `completion-nvim`, `nvim-compe`, `ddc` and `omnifunc`, install it with your favorite plugin manager.
+For `deoplete`, `completion-nvim`, `nvim-compe` `ddc.vim` and `omnifunc`, install it with your favorite plugin manager.
 >
     function! PackagerInit() abort
       packadd vim-packager
@@ -51,6 +51,7 @@ For `deoplete`, `completion-nvim`, `nvim-compe`, `ddc` and `omnifunc`, install i
       "or
       call packager#add('vim-denops/denops.vim')
       call packager#add('Shougo/ddc.vim')
+      call packager#add('Shougo/ddc-source-omni')
     endfunction
     " For built in omnifunc
     autocmd FileType sql setlocal omnifunc=vim_dadbod_completion#omni
@@ -63,13 +64,17 @@ For `deoplete`, `completion-nvim`, `nvim-compe`, `ddc` and `omnifunc`, install i
       autocmd FileType sql let g:completion_trigger_character = ['.', '"', '`', '[']
     augroup END
     " Shougo/ddc.vim
-    ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sources', 'dadbod-completion')
-    ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sourceOptions', {
-    \ 'dadbod-completion': {
-    \   'mark': 'DB',
-    \   'isVolatile': v:true,
-    \ },
-    \ })
+    call ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], #{
+        \   sources: ['omni'],
+        \   sourceOptions: #{
+        \    omni: #{
+        \     mark: 'O',
+        \     isVolatile: v:true,
+        \     omnifunc: 'vim_dadbod_completion#omni',
+        \   },
+        \  },
+        \  keywordPattern: '\w+|\.|"|\[|`'
+        \ })
     " Source is automatically added, you just need to include it in the chain complete list
     let g:completion_chain_complete_list = {
         \   'sql': [
