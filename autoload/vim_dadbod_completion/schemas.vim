@@ -1,8 +1,8 @@
-let s:base_column_query = 'select table_name,column_name from information_schema.columns'
-let s:query = s:base_column_query.' order by column_name asc'
-let s:schema_query = 'select table_schema,table_name from information_schema.columns group by table_schema,table_name'
-let s:count_query = 'select count(*) as total from information_schema.columns'
-let s:table_column_query = s:base_column_query.' where table_name={db_tbl_name}'
+let s:base_column_query = 'SELECT TABLE_NAME,COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS'
+let s:query = s:base_column_query.' ORDER BY COLUMN_NAME ASC'
+let s:schema_query = 'SELECT TABLE_SCHEMA,TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS GROUP BY TABLE_SCHEMA,TABLE_NAME'
+let s:count_query = 'SELECT COUNT(*) AS total FROM INFORMATION_SCHEMA.COLUMNS'
+let s:table_column_query = s:base_column_query.' WHERE TABLE_NAME={db_tbl_name}'
 let s:reserved_words = vim_dadbod_completion#reserved_keywords#get_as_dict()
 let s:quote_rules = {
       \ 'camelcase': {val -> val =~# '[A-Z]' && val =~# '[a-z]'},
