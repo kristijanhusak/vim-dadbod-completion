@@ -2,7 +2,7 @@ const { sources, workspace } = require('coc.nvim');
 const { nvim } = workspace;
 const path = require('path');
 const rtpPath = path.resolve(__dirname, '../');
-const validFiletypes = ['sql', 'mysql', 'plsql', 'cql']
+const validFiletypes = ['sql', 'mysql', 'plsql']
 
 
 exports.activate = async (context) => {

@@ -40,7 +40,7 @@
         },
         "coc.source.db.filetypes": {
           "type": ["array"],
-          "default": ["sql", "mysql", "plsql", "cql"],
+          "default": ["sql", "mysql", "plsql"],
           "items": {
             "type": "string"
           }

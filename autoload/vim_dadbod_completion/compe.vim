@@ -11,7 +11,7 @@ function! vim_dadbod_completion#compe#create() abort
 endfunction
 
 function! s:get_metadata(...) abort
-  return { 'filetypes': ['sql', 'mysql', 'plsql', 'cql'], 'priority': 100, 'dup': 0 }
+  return { 'filetypes': ['sql', 'mysql', 'plsql'], 'priority': 100, 'dup': 0 }
 endfunction
 
 function! s:determine(context) abort

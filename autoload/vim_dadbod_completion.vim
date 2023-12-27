@@ -1,6 +1,6 @@
 let s:cache = {}
 let s:buffers = {}
-let s:filetypes = ['sql', 'mysql', 'plsql', 'cql']
+let s:filetypes = ['sql', 'mysql', 'plsql']
 
 let s:quotes = vim_dadbod_completion#schemas#get_quotes_rgx()
 let s:trigger_rgx = printf('\(%s\|\.\)$', s:quotes.open)

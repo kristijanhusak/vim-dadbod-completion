@@ -6,7 +6,7 @@ class Source(Base):
         Base.__init__(self, vim)
         self.name = 'vim-dadbod-completion'
         self.mark = ''
-        self.filetypes = ['sql', 'mysql', 'plsql', 'cql']
+        self.filetypes = ['sql', 'mysql', 'plsql']
         self.input_pattern = '\w+|\.|"|\[|`'
         self.rank = 500
         self.max_pattern_length = -1
