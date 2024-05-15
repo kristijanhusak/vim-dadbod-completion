@@ -1,6 +1,7 @@
 # vim-dadbod-completion
 
 Database auto completion powered by [vim-dadbod](https://github.com/tpope/vim-dadbod).
+
 Supports:
 * [coc.nvim](https://github.com/neoclide/coc.nvim)
 * [deoplete.nvim](https://github.com/Shougo/deoplete.nvim)
@@ -11,6 +12,12 @@ Supports:
 * Built in `omnifunc`
 
 ![coc-db](https://user-images.githubusercontent.com/1782860/78941173-717f6680-7ab7-11ea-91b3-18bf178b3735.gif)
+
+
+Video presentation by TJ:
+
+[![Video presentation by TJ](https://i.ytimg.com/vi/ALGBuFLzDSA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDmOFtUnDmQx5U_PKBqV819YujOBw)](https://www.youtube.com/watch?v=ALGBuFLzDSA)
+
 
 ## Install
 
