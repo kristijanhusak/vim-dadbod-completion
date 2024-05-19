@@ -68,6 +68,19 @@ let s:oracle = {
 \   'table_column_query': {table -> printf(s:oracle_base_column_query, "AND C.table_name='".table."'")},
 \ }
 
+let s:cassandra = {
+\   'column_parser': function('s:map_and_filter', ['|']),
+\   'column_query': "SELECT table_name, column_name FROM system_schema.columns;",
+\   'count_column_query': "SELECT COUNT(*) FROM system_schema.columns;",
+\   'count_parser': function('s:count_parser', [1]),
+\   'table_column_query': {table -> substitute("SELECT table_name, column_name FROM system_schema.columns WHERE table_name='{db_tbl_name}';", '{db_tbl_name}', "'".table."'", '')},
+\   'schemas_query': "SELECT keyspace_name, table_name FROM system_schema.columns GROUP BY keyspace_name,table_name;",
+\   'schemas_parser': function('s:map_and_filter', ['|']),
+\   'requires_stdin': v:true,
+\   'quote': ['"', '"'],
+\   'should_quote': function('s:should_quote', [['reserved_word', 'space']]),
+\ }
+
 let s:schemas = {
       \ 'postgres': s:postgres,
       \ 'postgresql': s:postgres,
@@ -84,6 +97,7 @@ let s:schemas = {
       \   'count_parser': function('s:count_parser', [1])
       \ },
       \ 'oracle': s:oracle,
+      \ 'cassandra': s:cassandra,
       \ 'sqlite': {
       \   'args': ['-list'],
       \   'column_query': "SELECT m.name AS table_name, ii.name AS column_name FROM sqlite_schema AS m, pragma_table_list(m.name) AS il, pragma_table_info(il.name) AS ii WHERE m.type='table' ORDER BY column_name ASC;",
