@@ -1,6 +1,11 @@
-let s:base_column_query = 'SELECT TABLE_NAME,COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS'
+if empty(g:completion_use_svv)
+    let s:base_column_query = 'SELECT TABLE_NAME,COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS'
+    let s:schema_query = 'SELECT TABLE_SCHEMA,TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS GROUP BY TABLE_SCHEMA,TABLE_NAME'
+else
+    let s:base_column_query = 'SELECT DISTINCT TABLE_NAME,COLUMN_NAME FROM SVV_COLUMNS'
+    let s:schema_query = 'SELECT TABLE_SCHEMA,TABLE_NAME FROM SVV_COLUMNS GROUP BY TABLE_SCHEMA,TABLE_NAME'
+endif
 let s:query = s:base_column_query.' ORDER BY COLUMN_NAME ASC'
-let s:schema_query = 'SELECT TABLE_SCHEMA,TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS GROUP BY TABLE_SCHEMA,TABLE_NAME'
 let s:count_query = 'SELECT COUNT(*) AS total FROM INFORMATION_SCHEMA.COLUMNS'
 let s:table_column_query = s:base_column_query.' WHERE TABLE_NAME={db_tbl_name}'
 let s:reserved_words = vim_dadbod_completion#reserved_keywords#get_as_dict()
