@@ -5,10 +5,10 @@ let s:count_query = 'SELECT COUNT(*) AS total FROM INFORMATION_SCHEMA.COLUMNS'
 let s:table_column_query = s:base_column_query.' WHERE TABLE_NAME={db_tbl_name}'
 let s:reserved_words = vim_dadbod_completion#reserved_keywords#get_as_dict()
 let s:quote_rules = {
-      \ 'camelcase': {val -> val =~# '[A-Z]' && val =~# '[a-z]'},
-      \ 'space': {val -> val =~# '\s'},
-      \ 'reserved_word': {val -> has_key(s:reserved_words, toupper(val))}
-      \ }
+\ 'camelcase': {val -> val =~# '[A-Z]' && val =~# '[a-z]'},
+\ 'space': {val -> val =~# '\s'},
+\ 'reserved_word': {val -> has_key(s:reserved_words, toupper(val))}
+\ }
 
 function! s:map_and_filter(delimiter, list) abort
   return filter(
@@ -39,19 +39,19 @@ function! s:count_parser(index, result) abort
 endfunction
 
 let s:postgres = {
-      \ 'args': ['-A', '-c'],
-      \ 'column_query': s:query,
-      \ 'count_column_query': s:count_query,
-      \ 'table_column_query': {table -> substitute(s:table_column_query, '{db_tbl_name}', "'".table."'", '')},
-      \ 'functions_query': "SELECT routine_name FROM information_schema.routines WHERE routine_type='FUNCTION'",
-      \ 'functions_parser': {list->list[1:-4]},
-      \ 'schemas_query': s:schema_query,
-      \ 'schemas_parser': function('s:map_and_filter', ['|']),
-      \ 'quote': ['"', '"'],
-      \ 'should_quote': function('s:should_quote', [['camelcase', 'reserved_word', 'space']]),
-      \ 'column_parser': function('s:map_and_filter', ['|']),
-      \ 'count_parser': function('s:count_parser', [1])
-      \ }
+\ 'args': ['-A', '-c'],
+\ 'column_query': s:query,
+\ 'count_column_query': s:count_query,
+\ 'table_column_query': {table -> substitute(s:table_column_query, '{db_tbl_name}', "'".table."'", '')},
+\ 'functions_query': "SELECT routine_name FROM information_schema.routines WHERE routine_type='FUNCTION'",
+\ 'functions_parser': {list->list[1:-4]},
+\ 'schemas_query': s:schema_query,
+\ 'schemas_parser': function('s:map_and_filter', ['|']),
+\ 'quote': ['"', '"'],
+\ 'should_quote': function('s:should_quote', [['camelcase', 'reserved_word', 'space']]),
+\ 'column_parser': function('s:map_and_filter', ['|']),
+\ 'count_parser': function('s:count_parser', [1])
+\ }
 
 let s:oracle_args = "echo \"SET linesize 4000;\nSET pagesize 4000;\n%s\" | "
 let s:oracle_base_column_query = printf(s:oracle_args, "COLUMN column_name FORMAT a50;\nCOLUMN table_name FORMAT a50;\nSELECT C.table_name, C.column_name FROM all_tab_columns C JOIN all_users U ON C.owner = U.username WHERE U.common = 'NO' %s;")
@@ -79,23 +79,25 @@ let s:cassandra = {
 \   'requires_stdin': v:true,
 \   'quote': ['"', '"'],
 \   'should_quote': function('s:should_quote', [['reserved_word', 'space']]),
+
+let s:mysql = {
+\   'column_query': s:query,
+\   'count_column_query': s:count_query,
+\   'table_column_query': {table -> substitute(s:table_column_query, '{db_tbl_name}', "'".table."'", '')},
+\   'schemas_query': s:schema_query,
+\   'schemas_parser': function('s:map_and_filter', ['\t']),
+\   'requires_stdin': v:true,
+\   'quote': ['`', '`'],
+\   'should_quote': function('s:should_quote', [['reserved_word', 'space']]),
+\   'column_parser': function('s:map_and_filter', ['\t']),
+\   'count_parser': function('s:count_parser', [1])
 \ }
 
 let s:schemas = {
       \ 'postgres': s:postgres,
       \ 'postgresql': s:postgres,
-      \ 'mysql': {
-      \   'column_query': s:query,
-      \   'count_column_query': s:count_query,
-      \   'table_column_query': {table -> substitute(s:table_column_query, '{db_tbl_name}', "'".table."'", '')},
-      \   'schemas_query': s:schema_query,
-      \   'schemas_parser': function('s:map_and_filter', ['\t']),
-      \   'requires_stdin': v:true,
-      \   'quote': ['`', '`'],
-      \   'should_quote': function('s:should_quote', [['reserved_word', 'space']]),
-      \   'column_parser': function('s:map_and_filter', ['\t']),
-      \   'count_parser': function('s:count_parser', [1])
-      \ },
+      \ 'mysql': s:mysql,
+      \ 'mariadb': s:mysql,
       \ 'oracle': s:oracle,
       \ 'cassandra': s:cassandra,
       \ 'sqlite': {
