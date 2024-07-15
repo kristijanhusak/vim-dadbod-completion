@@ -36,50 +36,50 @@ For coc.nvim (https://github.com/neoclide/coc.nvim)
 <
 
 For `deoplete`, `completion-nvim`, `nvim-compe`, `ddc` and `omnifunc`, install it with your favorite plugin manager.
+
 >
-    function! PackagerInit() abort
-      packadd vim-packager
-      call packager#init()
-      call packager#add('kristijanhusak/vim-packager', { 'type': 'opt' })
-      call packager#add('tpope/vim-dadbod')
-      call packager#add('kristijanhusak/vim-dadbod-completion')
-      call packager#add('Shougo/deoplete.nvim')
-      "or
-      call packager#add('haorenW1025/completion-nvim')
-      "or
-      call packager#add('hrsh7th/nvim-compe')
-      "or
-      call packager#add('vim-denops/denops.vim')
-      call packager#add('Shougo/ddc.vim')
-    endfunction
+    Plug 'tpope/vim-dadbod'
+    Plug 'kristijanhusak/vim-dadbod-ui' "Optional
+    Plug 'kristijanhusak/vim-dadbod-completion'
+
     " For built in omnifunc
     autocmd FileType sql setlocal omnifunc=vim_dadbod_completion#omni
+
     " hrsh7th/nvim-compe
     let g:compe.source.vim_dadbod_completion = v:true
-    " For completion-nvim
-    augroup completion
-      autocmd!
-      autocmd BufEnter * lua require'completion'.on_attach()
-      autocmd FileType sql let g:completion_trigger_character = ['.', '"', '`', '[']
-    augroup END
+
+    " hrsh7th/nvim-cmp
+      autocmd FileType sql,mysql,plsql lua require('cmp').setup.buffer({ sources = {{ name = 'vim-dadbod-completion' }} })
+
     " Shougo/ddc.vim
-    ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sources', 'dadbod-completion')
-    ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sourceOptions', {
+    call ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sources', 'dadbod-completion')
+    call ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sourceOptions', {
     \ 'dadbod-completion': {
     \   'mark': 'DB',
     \   'isVolatile': v:true,
     \ },
     \ })
-    " Source is automatically added, you just need to include it in the chain complete list
-    let g:completion_chain_complete_list = {
-        \   'sql': [
-        \    {'complete_items': ['vim-dadbod-completion']},
-        \   ],
-        \ }
-    " Make sure `substring` is part of this list. Other items are optional for this completion source
-    let g:completion_matching_strategy_list = ['exact', 'substring']
-    " Useful if there's a lot of camel case items
-    let g:completion_matching_ignore_case = 1
+<
+
+Configuration using lazy.nvim (https://github.com/folke/lazy.nvim) with vim-dadbod-ui (https://github.com/kristijanhusak/vim-dadbod-ui)
+>
+    return {
+      'kristijanhusak/vim-dadbod-ui',
+      dependencies = {
+        { 'tpope/vim-dadbod', lazy = true },
+        { 'kristijanhusak/vim-dadbod-completion', ft = { 'sql', 'mysql', 'plsql' }, lazy = true },
+      },
+      cmd = {
+        'DBUI',
+        'DBUIToggle',
+        'DBUIAddConnection',
+        'DBUIFindBuffer',
+      },
+      init = function()
+        -- Your DBUI configuration
+        vim.g.db_ui_use_nerd_fonts = 1
+      end,
+    }
 <
 
 --------------------------------------------------------------------------------
