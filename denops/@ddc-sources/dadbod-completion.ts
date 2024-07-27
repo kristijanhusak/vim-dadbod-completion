@@ -1,27 +1,23 @@
+import { BaseSource, Item } from "https://deno.land/x/ddc_vim@v5.0.1/types.ts";
 import {
-  BaseSource,
-  Candidate,
-} from "https://deno.land/x/ddc_vim@v0.16.0/types.ts#^";
-
-import {
-  GatherCandidatesArguments,
+  GatherArguments,
   GetCompletePositionArguments,
-} from "https://deno.land/x/ddc_vim@v0.16.0/base/source.ts#^";
+} from "https://deno.land/x/ddc_vim@v5.0.1/base/source.ts";
 
 type Params = Record<never, never>;
 
 export class Source extends BaseSource<Params> {
-  async gatherCandidates(
-    args: GatherCandidatesArguments<Params>,
-  ): Promise<Candidate[]> {
+  override async gather(
+    args: GatherArguments<Params>,
+  ): Promise<Item[]> {
     const items = await args.denops.call(
       "vim_dadbod_completion#omni",
       0,
       args.completeStr,
-    ) as Candidate[];
+    ) as Item[];
     return items;
   }
-  async getCompletePosition(
+  override async getCompletePosition(
     args: GetCompletePositionArguments<Params>,
   ): Promise<number> {
     const pos = await args.denops.call(
@@ -31,7 +27,8 @@ export class Source extends BaseSource<Params> {
     ) as number;
     return pos;
   }
-  params(): Params {
+  override params(): Params {
     return {};
   }
 }
+
