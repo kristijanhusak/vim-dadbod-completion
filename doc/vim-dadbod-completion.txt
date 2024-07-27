@@ -130,6 +130,15 @@ g:vim_dadbod_completion_source_limits
 
 		Default value: `{}`
 
+							      *g:completion_use_svv*
+g:completion_use_svv
+		Changes completion to use SVV_COLUMNS instead of INFORMATION_SCHEMA.COLUMNS. This may find tables in Redshift that INFORMATION_SCHEMA does not reach.
+>
+		let g:completion_use_svv = 1
+<
+
+		Default value: `0`
+
 --------------------------------------------------------------------------------
 COMMANDS                                          *vim-dadbod-completion-commands*
 
