@@ -147,6 +147,10 @@ let s:reserved_words = [
       \ 'WRITETEXT', 'X509', 'XOR', 'YEAR', 'YEAR_MONTH', 'ZEROFILL', 'ZONE',
       \ ]
 
+if get(g:, 'vim_dadbod_completion_lowercase_keywords', 0) == 1
+  call map(s:reserved_words, {_, word -> tolower(word)})
+endif
+
 function! vim_dadbod_completion#reserved_keywords#get() abort
   return s:reserved_words
 endfunction
