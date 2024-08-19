@@ -10,6 +10,10 @@ let s:quote_rules = {
 \ 'reserved_word': {val -> has_key(s:reserved_words, toupper(val))}
 \ }
 
+if get(g:, 'vim_dadbod_completion_lowercase_keywords', 0) == 1
+  let s:quote_rules['reserved_word'] = {val -> has_key(s:reserved_words, tolower(val))}
+endif
+
 function! s:map_and_filter(delimiter, list) abort
   return filter(
         \ map(a:list, { _, table -> map(split(table, a:delimiter), 'trim(v:val)') }),

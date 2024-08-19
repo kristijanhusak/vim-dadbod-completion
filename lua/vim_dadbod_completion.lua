@@ -34,6 +34,15 @@ function nvim_cmp_source:get_trigger_characters(_)
   return { '"', '`', '[', ']', '.' }
 end
 
+local map_kind_to_cmp_lsp_kind = {
+  F = 3,  -- Function -> Function
+  C = 5,  -- Column -> Field
+  A = 6,  -- Alias -> Variable
+  T = 7,  -- Table -> Class
+  R = 14, -- Reserved -> Keyword
+  S = 19, -- Schema -> Folder
+}
+
 function nvim_cmp_source:complete(params, callback)
   local input = string.sub(params.context.cursor_before_line, params.offset)
   local results = vim.fn['vim_dadbod_completion#omni'](0, input)
@@ -47,6 +56,7 @@ function nvim_cmp_source:complete(params, callback)
         description = item.menu,
       },
       documentation = item.info,
+      kind = map_kind_to_cmp_lsp_kind[item.kind],
     })
   end
 
