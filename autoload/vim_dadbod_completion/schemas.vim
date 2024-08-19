@@ -83,6 +83,7 @@ let s:cassandra = {
 \   'requires_stdin': v:true,
 \   'quote': ['"', '"'],
 \   'should_quote': function('s:should_quote', [['reserved_word', 'space']]),
+\ }
 
 let s:mysql = {
 \   'column_query': s:query,
