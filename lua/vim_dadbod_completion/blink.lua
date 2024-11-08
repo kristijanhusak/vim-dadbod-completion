@@ -34,8 +34,8 @@ function M:get_completions(ctx, callback)
   local transformed_callback = function(items)
     callback({
       context = ctx,
-      is_incomplete_forward = false,
-      is_incomplete_backward = false,
+      is_incomplete_forward = true,
+      is_incomplete_backward = true,
       items = items,
     })
   end
