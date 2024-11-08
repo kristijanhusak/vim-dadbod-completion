@@ -17,7 +17,7 @@ end
 function M:get_completions(ctx, callback)
   local cursor_col = ctx.cursor[2]
   local line = ctx.line
-  local word_start = cursor_col
+  local word_start = cursor_col + 1
 
   local triggers = self:get_trigger_characters()
   while word_start > 1 do
