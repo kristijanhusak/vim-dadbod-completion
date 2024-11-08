@@ -8,6 +8,7 @@ Supports:
 * [nvim-compe](https://github.com/hrsh7th/nvim-compe)
 * [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
 * [ddc.vim](https://github.com/Shougo/ddc.vim)
+* [blink.cmp](https://github.com/Saghen/blink.cmp)
 * Built in `omnifunc`
 
 ![coc-db](https://user-images.githubusercontent.com/1782860/78941173-717f6680-7ab7-11ea-91b3-18bf178b3735.gif)
@@ -57,21 +58,37 @@ call ddc#custom#patch_filetype(['sql', 'mysql', 'plsql'], 'sourceOptions', {
 Configuration using [lazy.nvim](https://github.com/folke/lazy.nvim) with [vim-dadbod-ui](https://github.com/kristijanhusak/vim-dadbod-ui)
 ```lua
 return {
-  'kristijanhusak/vim-dadbod-ui',
-  dependencies = {
-    { 'tpope/vim-dadbod', lazy = true },
-    { 'kristijanhusak/vim-dadbod-completion', ft = { 'sql', 'mysql', 'plsql' }, lazy = true },
+  {
+    'kristijanhusak/vim-dadbod-ui',
+    dependencies = {
+      { 'tpope/vim-dadbod', lazy = true },
+      { 'kristijanhusak/vim-dadbod-completion', ft = { 'sql', 'mysql', 'plsql' }, lazy = true },
+    },
+    cmd = {
+      'DBUI',
+      'DBUIToggle',
+      'DBUIAddConnection',
+      'DBUIFindBuffer',
+    },
+    init = function()
+      -- Your DBUI configuration
+      vim.g.db_ui_use_nerd_fonts = 1
+    end,
   },
-  cmd = {
-    'DBUI',
-    'DBUIToggle',
-    'DBUIAddConnection',
-    'DBUIFindBuffer',
-  },
-  init = function()
-    -- Your DBUI configuration
-    vim.g.db_ui_use_nerd_fonts = 1
-  end,
+  { -- optional saghen/blink.cmp completion source
+    'saghen/blink.cmp',
+    opts = {
+      sources = {
+        -- add vim-dadbod-completion to your completion providers
+        completion = {
+          enabled_providers = { "lsp", "path", "snippets", "buffer", "dadbod" },
+        },
+        providers = {
+          dadbod = { name = "Dadbod", module = "vim_dadbod_completion.blink" },
+        },
+      },
+    },
+  }
 }
 ```
 
