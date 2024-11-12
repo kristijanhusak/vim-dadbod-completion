@@ -57,6 +57,34 @@ let s:postgres = {
       \ 'count_parser': function('s:count_parser', [1])
       \ }
 
+let s:duckdb_column_select = "
+      \ SELECT c.table_name, c.column_name"
+let s:duckdb_column_base = "
+      \ FROM duckdb_columns() AS c
+      \ INNER JOIN duckdb_tables() AS t ON c.table_oid = t.table_oid
+      \ INNER JOIN duckdb_schemas() AS s ON c.schema_oid = s.oid
+      \ INNER JOIN duckdb_databases() AS d ON c.database_oid = d.database_oid
+      \ WHERE NOT d.internal AND NOT s.internal"
+let s:duckdb_column_order = "
+      \ ORDER BY c.column_name ASC"
+let s:duckdb_column_query = s:duckdb_column_select.s:duckdb_column_base.s:duckdb_column_order
+let s:duckdb_table_column_query = s:duckdb_column_select.s:duckdb_column_base." AND table_name={db_tbl_name}".s:duckdb_column_order
+
+let s:duckdb = {
+      \ 'args': ['-list', '-c'],
+      \ 'column_query': s:duckdb_column_query,
+      \ 'count_column_query': "SELECT count(*)".s:duckdb_column_base,
+      \ 'table_column_query': {table -> substitute(s:duckdb_table_column_query, '{db_tbl_name}', "'".table."'", '')},
+      \ 'functions_query': "SELECT function_name FROM duckdb_functions() order by function_oid",
+      \ 'functions_parser': {list->list[1:-4]},
+      \ 'schemas_query': "SELECT DISTINCT c.schema_name, c.table_name".s:duckdb_column_base." ORDER BY c.schema_name ASC, c.table_name ASC",
+      \ 'schemas_parser': function('s:map_and_filter', ['|']),
+      \ 'quote': ['"', '"'],
+      \ 'should_quote': function('s:should_quote', [['camelcase', 'reserved_word', 'space']]),
+      \ 'column_parser': function('s:map_and_filter', ['|']),
+      \ 'count_parser': function('s:count_parser', [1])
+      \ }
+
 let s:oracle_args = "echo \"SET linesize 4000;\nSET pagesize 4000;\n%s\" | "
 let s:oracle_base_column_query = printf(s:oracle_args, "COLUMN column_name FORMAT a50;\nCOLUMN table_name FORMAT a50;\nSELECT C.table_name, C.column_name FROM all_tab_columns C JOIN all_users U ON C.owner = U.username WHERE U.common = 'NO' %s;")
 let s:oracle = {
@@ -91,6 +119,8 @@ let s:schemas = {
       \ 'mysql': s:mysql,
       \ 'mariadb': s:mysql,
       \ 'oracle': s:oracle,
+      \ 'duckdb': s:duckdb,
+      \ 'md': s:duckdb,
       \ 'sqlite': {
       \   'args': ['-list'],
       \   'column_query': "SELECT m.name AS table_name, ii.name AS column_name FROM sqlite_schema AS m, pragma_table_list(m.name) AS il, pragma_table_info(il.name) AS ii WHERE m.type='table' ORDER BY column_name ASC;",
