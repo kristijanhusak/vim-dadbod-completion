@@ -1,6 +1,15 @@
 ---@type blink.cmp.Source
 local M = {}
 
+local map_kind_to_cmp_lsp_kind = {
+  F = 3,  -- Function -> Function
+  C = 5,  -- Column -> Field
+  A = 6,  -- Alias -> Variable
+  T = 7,  -- Table -> Class
+  R = 14, -- Reserved -> Keyword
+  S = 19, -- Schema -> Folder
+}
+
 function M.new()
   return setmetatable({}, { __index = M })
 end
@@ -55,7 +64,7 @@ function M:get_completions(ctx, callback)
       insertText = item.word,
       labelDetails = item.menu and { description = item.menu } or nil,
       documentation = item.info or '',
-      kind = require 'blink.cmp.types'.CompletionItemKind or vim.lsp.protocol.CompletionItemKind.Text
+      kind = map_kind_to_cmp_lsp_kind[item.kind] or vim.lsp.protocol.CompletionItemKind.Text
     })
   end
 
