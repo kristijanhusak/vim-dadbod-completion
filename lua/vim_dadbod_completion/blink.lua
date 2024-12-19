@@ -55,9 +55,17 @@ function M:get_completions(ctx, callback)
     transformed_callback({})
     return function() end
   end
+
+  local by_word = {}
+  for _, item in ipairs(results) do
+    local key = item.word..item.kind
+    if by_word[key] == nil then
+      by_word[key] = item
+    end
+  end
   local items = {} ---@type table<string,lsp.CompletionItem>
 
-  for _, item in ipairs(results) do
+  for _, item in pairs(by_word) do
     table.insert(items, {
       label = item.abbr or item.word,
       dup = 0,
@@ -68,7 +76,7 @@ function M:get_completions(ctx, callback)
     })
   end
 
-  transformed_callback(vim.tbl_values(items))
+  transformed_callback(items)
 
   return function() end
 end
