@@ -86,7 +86,12 @@ function! vim_dadbod_completion#omni(findstart, base)
     let schemas = schemas[0:s:limit('schemas')]
     call map(schemas, function('s:map_item', ['string', 'schema', 'S']))
 
-    let aliases = items(s:buffers[bufnr].aliases)
+    for [tbl, alias] in items(s:buffers[bufnr].aliases)
+      for a in alias
+        call add(aliases, [tbl, a])
+      endfor
+    endfor
+
     if should_filter
       call filter(aliases, 'v:val[1] =~? s:filter_rgx.a:base')
     endif
@@ -356,7 +361,7 @@ function! s:get_scope(buffer, table_scope, type) abort
     return a:table_scope
   endif
 
-  let alias = filter(copy(a:buffer.aliases), 'v:val ==? a:table_scope')
+  let alias = filter(copy(a:buffer.aliases), 'index(v:val, a:table_scope) > -1')
 
   if empty(alias)
     return ''

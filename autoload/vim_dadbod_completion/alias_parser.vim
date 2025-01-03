@@ -23,7 +23,10 @@ function! vim_dadbod_completion#alias_parser#parse(bufnr, tables) abort
 
   for [tbl, alias] in aliases
     if !empty(alias) && index(a:tables, tbl) > -1 && index(s:reserved_words, tolower(alias)) ==? -1
-      let result[tbl] = alias
+      if !has_key(result, tbl)
+        let result[tbl] = []
+      endif
+      call add(result[tbl], alias)
     endif
   endfor
 
