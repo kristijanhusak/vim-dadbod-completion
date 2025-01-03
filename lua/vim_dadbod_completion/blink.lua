@@ -40,6 +40,10 @@ function M:get_completions(ctx, callback)
   -- Get text from word start to cursor
   local input = line:sub(word_start, cursor_col)
 
+  if input ~= '' and input:match('[^0-9A-Za-z_]+') then
+    input = ''
+  end
+
   local transformed_callback = function(items)
     callback({
       context = ctx,
