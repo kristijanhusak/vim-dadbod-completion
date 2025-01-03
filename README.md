@@ -97,7 +97,12 @@ return {
 
 ## How it works
 * If an sql buffer is created by [vim-dadbod-ui](https://github.com/kristijanhusak/vim-dadbod-ui), it reads all the configuration from there. It should work out of the box.
-* If `vim-dadbod-ui` is not used, [vim-dadbod](https://github.com/tpope/vim-dadbod) `g:db` or `b:db` is used. If you want, you can also add `b:db_table` to limit autocompletions to that table only.
+* If `vim-dadbod-ui` is not used, there are multiple ways to define the connection string, prioritized by this order:
+  * Window variable - example: `let w:db = 'postgresql://user:pass@localhost:5432/db_name'`
+  * Tab variable - example: `let t:db = 'postgresql://user:pass@localhost:5432/db_name'`
+  * Buffer variable - example: `let b:db = 'postgresql://user:pass@localhost:5432/db_name'`. You can also add `let b:db_table = 'table_name'` to limit column completions only to this table
+  * Global variable - example: `let g:db = 'postgresql://user:pass@localhost:5432/db_name'`
+  * `$DATABASE_URL` env variable, defined outside of Vim, or inside with `let $DATABASE_URL = 'postgresql://user:pass@localhost:5432/db_name'`
 
 ## Settings
 Default mark for completion items is `[DB]`. To change it, add this to vimrc:
