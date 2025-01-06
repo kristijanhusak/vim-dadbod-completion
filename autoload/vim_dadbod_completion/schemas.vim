@@ -47,7 +47,7 @@ let s:postgres = {
       \ 'column_query': s:query,
       \ 'count_column_query': s:count_query,
       \ 'table_column_query': {table -> substitute(s:table_column_query, '{db_tbl_name}', "'".table."'", '')},
-      \ 'functions_query': "SELECT routine_name FROM information_schema.routines WHERE routine_type='FUNCTION'",
+      \ 'functions_query': "SELECT DISTINCT(routine_name) FROM information_schema.routines WHERE routine_type='FUNCTION'",
       \ 'functions_parser': {list->list[1:-4]},
       \ 'schemas_query': s:schema_query,
       \ 'schemas_parser': function('s:map_and_filter', ['|']),
