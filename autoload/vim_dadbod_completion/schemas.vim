@@ -85,6 +85,25 @@ let s:mysql = {
 \   'count_parser': function('s:count_parser', [1])
 \ }
 
+let s:clickhouse_base_column_query = "SELECT table AS TABLE_NAME, name AS COLUMN_NAME FROM system.columns"
+let s:clickhouse_query = s:clickhouse_base_column_query . " ORDER BY COLUMN_NAME ASC"
+let s:clickhouse_count_query = "SELECT count() AS total FROM system.columns"
+let s:clickhouse_schema_query = "SELECT DISTINCT database AS TABLE_SCHEMA, table AS TABLE_NAME FROM system.columns ORDER BY TABLE_SCHEMA, TABLE_NAME"
+let s:clickhouse_table_column_query = s:clickhouse_base_column_query . " WHERE table = {db_tbl_name}"
+
+let s:clickhouse = {
+\   'args': ['--query'],
+\   'column_query': s:clickhouse_query,
+\   'count_column_query': s:clickhouse_count_query,
+\   'table_column_query': {table -> substitute(s:clickhouse_table_column_query, '{db_tbl_name}', "'".table."'", '')},
+\   'schemas_query': s:clickhouse_schema_query,
+\   'schemas_parser': function('s:map_and_filter', ['\t']),
+\   'quote': ['`', '`'],
+\   'should_quote': function('s:should_quote', [['reserved_word', 'space']]),
+\   'column_parser': function('s:map_and_filter', ['\t']),
+\   'count_parser': function('s:count_parser', [0]),
+\ }
+
 let s:schemas = {
       \ 'postgres': s:postgres,
       \ 'postgresql': s:postgres,
@@ -113,6 +132,7 @@ let s:schemas = {
       \   'column_parser': function('s:map_and_filter', ['|']),
       \   'count_parser': function('s:count_parser', [0])
       \ },
+      \ 'clickhouse': s:clickhouse,
     \ }
 
 function! vim_dadbod_completion#schemas#get(scheme)
