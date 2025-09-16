@@ -1,5 +1,5 @@
 local has_nvim_cmp, cmp = pcall(require, 'cmp')
-if has_nvim_cmp then
+if has_nvim_cmp and type(cmp) == 'table' and type(cmp.register_source) == 'function' then
   cmp.register_source('vim-dadbod-completion', require('vim_dadbod_completion').nvim_cmp_source)
 end
 

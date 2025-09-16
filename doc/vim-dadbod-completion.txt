@@ -139,6 +139,18 @@ g:vim_dadbod_completion_lowercase_keywords
 
 		Default value: `0`
 
+					      *g:vim_dadbod_completion_disable_notifications*
+g:vim_dadbod_completion_disable_notifications
+		Disable notifications.
+>
+		let g:vim_dadbod_completion_disable_notifications = 1
+<
+
+		NOTE: vim-dadbod-ui configuration option `let g:db_ui_disable_info_notifications = 1`
+		also disables the notification in this plugin.
+
+		Default value: `0`
+
 --------------------------------------------------------------------------------
 COMMANDS                                          *vim-dadbod-completion-commands*
 

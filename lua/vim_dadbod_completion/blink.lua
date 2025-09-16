@@ -1,6 +1,15 @@
 ---@type blink.cmp.Source
 local M = {}
 
+local map_kind_to_cmp_lsp_kind = {
+  F = 3,  -- Function -> Function
+  C = 5,  -- Column -> Field
+  A = 6,  -- Alias -> Variable
+  T = 7,  -- Table -> Class
+  R = 14, -- Reserved -> Keyword
+  S = 19, -- Schema -> Folder
+}
+
 function M.new()
   return setmetatable({}, { __index = M })
 end
@@ -31,6 +40,10 @@ function M:get_completions(ctx, callback)
   -- Get text from word start to cursor
   local input = line:sub(word_start, cursor_col)
 
+  if input ~= '' and input:match('[^0-9A-Za-z_]+') then
+    input = ''
+  end
+
   local transformed_callback = function(items)
     callback({
       context = ctx,
@@ -46,20 +59,28 @@ function M:get_completions(ctx, callback)
     transformed_callback({})
     return function() end
   end
+
+  local by_word = {}
+  for _, item in ipairs(results) do
+    local key = item.word..item.kind
+    if by_word[key] == nil then
+      by_word[key] = item
+    end
+  end
   local items = {} ---@type table<string,lsp.CompletionItem>
 
-  for _, item in ipairs(results) do
+  for _, item in pairs(by_word) do
     table.insert(items, {
       label = item.abbr or item.word,
       dup = 0,
       insertText = item.word,
       labelDetails = item.menu and { description = item.menu } or nil,
       documentation = item.info or '',
-      kind = require 'blink.cmp.types'.CompletionItemKind or vim.lsp.protocol.CompletionItemKind.Text
+      kind = map_kind_to_cmp_lsp_kind[item.kind] or vim.lsp.protocol.CompletionItemKind.Text
     })
   end
 
-  transformed_callback(vim.tbl_values(items))
+  transformed_callback(items)
 
   return function() end
 end
