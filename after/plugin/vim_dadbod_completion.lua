@@ -3,8 +3,7 @@ if has_nvim_cmp and type(cmp) == 'table' and type(cmp.register_source) == 'funct
   cmp.register_source('vim-dadbod-completion', require('vim_dadbod_completion').nvim_cmp_source)
 end
 
-local has_completion,completion = pcall(require, 'completion')
-if has_completion then
-  completion.addCompletionSource('vim-dadbod-completion', require'vim_dadbod_completion'.complete_item)
+local has_completion, completion = pcall(require, 'completion')
+if has_completion and type(completion) == 'table' and type(completion.addCompletionSource) == 'function' then
+  completion.addCompletionSource('vim-dadbod-completion', require('vim_dadbod_completion').complete_item)
 end
-
